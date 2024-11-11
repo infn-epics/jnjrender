@@ -17,8 +17,8 @@ test:
       supps=$(ls tests/*.j2)
       for k in $supps; do
         echo "* Testing $k"
-        jnjrender $k $k.init.yaml --output tests/$k.yaml
-        diff tests/$k.yaml tests/refs/$k.yaml
+        jnjrender $k $k.init.yaml --output $k.yaml
+        diff $k.yaml tests/refs/$k.yaml
       done
 
 pypi-publish:
