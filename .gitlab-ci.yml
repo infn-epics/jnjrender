@@ -14,11 +14,12 @@ test:
   stage: test
   script:
     - |
+      cd tests
       supps=$(ls *.j2)
       for k in $supps; do
         echo "* Testing $k"
-        jnjrender tests/$k tests/$k.init.yaml --output tests/$k.yaml
-        diff tests/$k.yaml tests/refs/$k.yaml
+        jnjrender $k $k.init.yaml --output $k.yaml
+        diff $k.yaml refs/$k.yaml
       done
 
 pypi-publish:
