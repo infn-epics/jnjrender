@@ -22,7 +22,7 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
     else:
         print(rendered_content)
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Render a Jinja2 file with YAML variables.")
     parser.add_argument("jinja_file", help="Path to the Jinja2 template file.")
     parser.add_argument("yaml_file", help="Path to the YAML file with variables.")
@@ -30,3 +30,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     render_jinja_to_yaml(args.jinja_file, args.yaml_file, args.output)
+    
+if __name__ == "__main__":
+    main()
