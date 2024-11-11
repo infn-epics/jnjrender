@@ -19,7 +19,7 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
     if output_file:
         with open(output_file, 'w') as file:
             file.write(rendered_content)
-            print(f"* generated {output_file}")
+            print(f"* rendered {jinja_file}->{output_file} using {yaml_file}")
 
     else:
         print(rendered_content)
