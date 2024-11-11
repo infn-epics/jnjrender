@@ -1,0 +1,83 @@
+image: baltig.infn.it:4567/epics-containers/epics-py-base
+
+stages:
+  - test
+  - pypi-publish
+
+
+before_script:
+  # Update pip to the latest version
+  - python3 -m pip install --upgrade pip
+  - pip install .
+  - export PATH=$PATH:$HOME/.local/bin
+  - ls $HOME/.local/lib/python3.10/site-packages/jnjrender/template/
+test:
+  stage: test
+  script:
+    - |
+      epik8s-gen epik8s-euaps --beamline euaps --ingressclass haproxy \
+      --beamlinerepogit https://baltig.infn.it/lnf-da-control/epik8s-euaps.git \
+      --dnsnamespace apps.k8s-da.lnf.infn.it \
+      --iocbaseip 10.96.0.0/12 \
+      --cagatewayip 10.10.6.109  \
+      --pvagatewayip 10.10.6.110 \
+      --vcams 10 \
+      --token token-fake \
+      --vicpdas 4
+
+    - |
+      epik8s-gen testbeamline --beamline testbeamline \
+      --ingressclass nginx \
+      --beamlinerepogit https://baltig.infn.it/epics-containers/epik8s-testbeamline.git \
+      --iocbaseip 10.152.183.0/24 \
+      --dnsnamespace chaost-camera01.chaos.lnf.infn.it \
+      --targetRevision experimental \
+      --cagatewayip 192.168.197.2 \
+      --pvagatewayip 192.168.197.3
+
+    # Create a tar.gz archive of the generated beamline directories
+    - tar czvf test-beamline.tar.gz epik8s-euaps testbeamline
+  artifacts:
+    paths:
+      - test-beamline.tar.gz
+    expire_in: 1 month
+
+beamline-opi-gen:
+  stage: beamline-opi-gen
+  dependencies:
+    - beamline-gen
+  script:
+    # Extract the test-beamline.tar.gz artifact
+    - tar xzvf test-beamline.tar.gz
+
+    # Run the opi generation command for each beamline configuration
+    - epik8s-opigen --yaml epik8s-euaps/deploy/values.yaml --projectdir euaps-opi
+    - epik8s-opigen --yaml testbeamline/deploy/values.yaml --projectdir testbeamline-opi
+    - epik8s-opigen --yaml tests/sparc_values.yaml --projectdir sparc-test-opi
+    - epik8s-opigen --yaml tests/btf_values.yaml --projectdir btf-test-opi
+
+    # Create tar.gz archives of the generated OPI directories
+    - tar czvf euaps-opi.tar.gz euaps-opi
+    - tar czvf testbeamline-opi.tar.gz testbeamline-opi
+    - tar czvf sparc-test-opi.tar.gz sparc-test-opi
+    - tar czvf btf-test-opi.tar.gz btf-test-opi
+  artifacts:
+    paths:
+      - euaps-opi.tar.gz
+      - testbeamline-opi.tar.gz
+      - sparc-test-opi.tar.gz
+      - btf-test-opi.tar.gz
+    expire_in: 1 month
+
+pypi-publish:
+  stage: pypi-publish
+  script:
+    - python3 -m pip install --upgrade build twine
+    # Build the package
+    - python3 -m build
+    # Publish to PyPI
+    - python3 -m twine upload dist/* -u $PYPI_USERNAME -p $PYPI_TOKEN
+  only:
+    - main  # Optional: Restrict this stage to specific branches
+  dependencies:
+    - beamline-opi-gen

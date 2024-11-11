@@ -1,0 +1,44 @@
+name: "cam02"
+asset: "https://servicedesk.infn.it/secure/ObjectSchema.jspa?id=44&typeId=2748&objectId=126656"
+charturl: 'https://baltig.infn.it/epics-containers/ioc-chart.git'
+image: baltig.infn.it:4567/epics-containers/infn-epics-ioc:latest
+devtype: camera
+devgroup: diag
+gitinit: true
+iocdir: "camera"
+ioctop: cam02
+iocdata: "nfs/data"
+
+pva: true
+networks:
+  - name: "gigevision-client"
+    annotation: "gigevision-network"
+# hostNetwork: true
+useAffinity: true
+affinityKey: "gige"
+affinityValue: "enabled"
+iocprefix: "LEL:SCN02"
+iocroot: "CAM01"
+autosync: true ## restart automatically on changes
+iocinit:
+  - name: "AcquirePeriod"
+    value: "1"
+  - name: "FrameRate"
+    value: "1"
+  - name: "FrameRateEnable"
+    value: "Yes"
+iocparam:
+- name: "CAMERA_ID"
+  value: "Basler-a2A1920-51gmBAS-40458497"
+- name: "CAMERA_CLASS"
+  value: "Basler-a2A2600-20gmBAS"
+- name: "CAMERA_TYPE"
+  value: "Int8"
+- name: "CAMERA_FTVL"
+  value: "UCHAR"
+- name: "CAMERA_ELEMS"
+  value: "325546"
+- name: "CAMERA_STATS_XSIZE"
+  value: "1024"
+- name: "CAMERA_STATS_YSIZE"
+  value: "768"

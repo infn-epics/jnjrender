@@ -1,18 +1,28 @@
-# jnja2yaml
+# jnjrender
 
-`jnja2yaml` is a command-line tool for rendering Jinja2 templates using variables from a YAML file. It takes in a Jinja2 file and a YAML file, processes the template with the specified variables, and outputs the rendered content to standard output in YAML format.
+**jnjrender** is a Python command-line application designed to render [Jinja2](https://jinja.palletsprojects.com/) templates into YAML files using variables from a specified YAML file. It allows for flexible templating by combining the power of Jinja2 and YAML, making it easy to create complex YAML configurations with dynamic content.
 
 ## Features
 
-- Renders Jinja2 templates with variables provided in a YAML file.
-- Outputs the rendered content to the terminal, suitable for quick and flexible templating.
-- Lightweight and easy to use for templating configurations and generating YAML files dynamically.
+- Render Jinja2 templates with values from a YAML file.
+- Output rendered content to the console or save it to a file.
+- Simple command-line interface for ease of use.
 
 ## Installation
 
-To install `jnja2yaml`, clone the repository and install it using `pip`:
+Clone this repository and install the requirements:
 
 ```bash
-git clone https://github.com/your-username/jnja2yaml.git
-cd jnja2yaml
-pip install .
+git clone https://github.com/yourusername/jnjrender.git
+cd jnjrender
+pip install -r requirements.txt
+```
+
+## Examples
+
+```bash
+python jnjrender.py template.j2 variables.yaml --output output.yaml
+## prints stdout
+python jnjrender.py template.j2 variables.yaml
+
+```

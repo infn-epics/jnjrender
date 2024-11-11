@@ -1,0 +1,191 @@
+# yaml-language-server: $schema=../schemas/ibek.support.schema.json
+ioc_name: cam02
+description: Camera model with plugins
+
+entities:
+  
+  - type: ADAravis.aravisCamera
+    P: "LEL:SCN02:"
+    R: "CAM01:"
+    PORT: CAM01
+    ID: CAMERA_ID
+    CLASS: CAMERA_CLASS
+
+  - type: ADCore.NDROI
+    PORT: CAM01.ROI1
+    NDARRAY_PORT: CAM01
+    P: "LEL:SCN02:CAM01"
+    R: ":Roi1:"
+    ENABLED: 1
+
+  - type: ADCore.NDProcess
+    PORT: CAM01.PROC
+    P: "LEL:SCN02:CAM01"
+    R: ":Proc1:"
+    NDARRAY_PORT: CAM01.ROI1
+    ENABLED: 1
+
+  - type: ADCore.NDOverlay
+    PORT: CAM01.OVERLAY1
+    NDARRAY_PORT: CAM01
+    P: "LEL:SCN02:CAM01"
+    R: ":Overlay1:"
+    NAME: "Reference"
+    NOverlays: 8
+    SHAPE: "3"
+    XPOS: ""
+    YPOS: ""
+    XCENT: ""
+    YCENT: ""
+    XSIZE: ""
+    YSIZE: ""
+    XWIDTH: ""
+    YWIDTH: ""
+    O: "1:"
+
+  # Want to have also high throuput PVA protocol
+  - type: ADCore.NDPvaPlugin
+    PORT: CAM01.PVA
+    PVNAME: "LEL:SCN02:CAM01:PVA:OUTPUT"
+    P: "LEL:SCN02:CAM01"
+    R: ":Pva1:"
+    NDARRAY_PORT: CAM01
+    ENABLED: 1
+  
+  - type: ADCore.NDPvaPlugin
+    PORT: CAM01.PVA2
+    PVNAME: "LEL:SCN02:CAM01:PROC:OUTPUT"
+    P: "LEL:SCN02:CAM01"
+    R: ":Proc1:Pva1:"
+    NDARRAY_PORT: CAM01.PROC
+    ENABLED: 1
+  - type: ADCore.NDPvaPlugin
+    PORT: CAM01.PVA3
+    PVNAME: "LEL:SCN02:CAM01:ROI1:OUTPUT"
+    P: "LEL:SCN02:CAM01"
+    R: ":Roi1:Pva1:"
+    NDARRAY_PORT: CAM01.ROI1
+    ENABLED: 1
+  - type: ADCore.NDStdArrays
+    P: "LEL:SCN02:CAM01"
+    R: ":image1:"
+    PORT: CAM01.NTD
+    NDARRAY_PORT: CAM01
+    TYPE: CAMERA_TYPE
+    FTVL: CAMERA_FTVL
+    NELEMENTS: CAMERA_ELEMS
+    ENABLED: 1
+
+  - type: ADCore.NDPvaPlugin
+    PORT: CAM01.PVA4
+    PVNAME: "LEL:SCN02:CAM01:OVERLAY1:OUTPUT"
+    P: "LEL:SCN02:CAM01"
+    R: ":Overlay1:Pva1:"
+    NDARRAY_PORT: CAM01.OVERLAY1
+    ENABLED: 1
+
+  - type: ADCore.NDStdArrays
+    P: "LEL:SCN02:CAM01"
+    R: ":image2:"
+    PORT: CAM01.NTD2
+    NDARRAY_PORT: CAM01.PROC
+    TYPE: CAMERA_TYPE
+    FTVL: CAMERA_FTVL
+    NELEMENTS: CAMERA_ELEMS
+    ENABLED: 1
+
+  - type: ADCore.NDStats
+    PORT: CAM01.STATS
+    NDARRAY_PORT: CAM01
+    HIST_SIZE: 50
+    P: "LEL:SCN02:CAM01"
+    R: ":Stats1:"
+    XSIZE: CAMERA_STATS_XSIZE
+    YSIZE: CAMERA_STATS_YSIZE
+    ENABLED: 1
+
+  - type: ADCore.NDStats
+    PORT: CAM01.STATS2
+    NDARRAY_PORT: CAM01.PROC
+    HIST_SIZE: 50
+    P: "LEL:SCN02:CAM01"
+    R: ":Proc1:Stats1:"
+    XSIZE: CAMERA_STATS_XSIZE
+    YSIZE: CAMERA_STATS_YSIZE
+    ENABLED: 1
+  
+  - type: ADCore.NDStats
+    PORT: CAM01.STATS3
+    NDARRAY_PORT: CAM01.ROI1
+    HIST_SIZE: 50
+    P: "LEL:SCN02:CAM01"
+    R: ":Roi1:Stats1:"
+    XSIZE: CAMERA_STATS_XSIZE
+    YSIZE: CAMERA_STATS_YSIZE
+    ENABLED: 1
+  - type: ADCore.NDFileTIFF
+    PORT: CAM01.TIFF
+    NDARRAY_PORT: CAM01
+    P: "LEL:SCN02:CAM01"
+    R: ":TIFF1:"
+    ENABLED: 1
+
+  - type: ADCore.NDFileTIFF
+    PORT: CAM01.TIFF2
+    NDARRAY_PORT: CAM01.PROC
+    P: "LEL:SCN02:CAM01"
+    R: ":Proc1:TIFF1:"
+    ENABLED: 1
+
+  - type: ADCore.NDFileTIFF
+    PORT: CAM01.TIFF3
+    NDARRAY_PORT: CAM01.ROI1
+    P: "LEL:SCN02:CAM01"
+    R: ":Roi1:TIFF1:"
+    ENABLED: 1
+
+  - type: ADCore.NDFileTIFF
+    PORT: CAM01.TIFF4
+    NDARRAY_PORT: CAM01.OVERLAY1
+    P: "LEL:SCN02:CAM01"
+    R: ":Overlay1:TIFF1:"
+    ENABLED: 1
+
+  - type: epics.PostStartupCommand 
+    command: dbl              ## dumps PV NAMES
+
+  - type: epics.PostStartupCommand 
+    command: |
+      dbl("*") > /pvlist.txt
+      dbpf("LEL:SCN02:CAM01:TIFF1:FilePath", "nfs/data")
+      dbpf("LEL:SCN02:CAM01:TIFF1:FileWriteMode",2)
+      dbpf("LEL:SCN02:CAM01:TIFF1:FileName","camera")
+      dbpf("LEL:SCN02:CAM01:TIFF1:AutoIncrement",1)
+
+      dbpf("LEL:SCN02:CAM01:TIFF1:FileTemplate","%s%s_%3.3d.tiff")
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF1:FilePath", "nfs/data")
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF1:FileWriteMode",2)
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF1:FileName","CAM01")
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF1:AutoIncrement",1)
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF1:FileTemplate","%s%s_proc_%3.3d.tiff")
+
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF:FilePath", "nfs/data")
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF:FileWriteMode",2)
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF:FileName","CAM01")
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF:AutoIncrement",1)
+      dbpf("LEL:SCN02:CAM01:Proc1:TIFF:FileTemplate","%s%s_proc_%3.3d.tiff")
+
+      dbpf("LEL:SCN02:CAM01:Roi1:TIFF1:FilePath", "nfs/data")
+      dbpf("LEL:SCN02:CAM01:Roi1:TIFF1:FileWriteMode",2)
+      dbpf("LEL:SCN02:CAM01:Roi1:TIFF1:FileName","CAM01")
+      dbpf("LEL:SCN02:CAM01:Roi1:TIFF1:AutoIncrement",1)
+      dbpf("LEL:SCN02:CAM01:Roi1:TIFF1:FileTemplate","%s%s_roi_%3.3d.tiff")
+      dbpf("LEL:SCN02:CAM01:Overlay1:TIFF1:FilePath", "nfs/data")
+      dbpf("LEL:SCN02:CAM01:Overlay1:TIFF1:FileWriteMode",2)
+      dbpf("LEL:SCN02:CAM01:Overlay1:TIFF1:FileTemplate","%s%s_overlay_%3.3d.tiff")
+      dbpf("LEL:SCN02:CAM01:Overlay1:TIFF1:FileName","CAM01")
+      dbpf("LEL:SCN02:CAM01:Overlay1:EnableCallbacks","1")
+      < cam02/init.cmd
+
+  - type: epics.EpicsCaMaxArrayBytes 
+    max_bytes: 10000000

@@ -1,6 +1,6 @@
-# jnja2yaml/tests/test_renderer.py
+# jnjrender/tests/test_renderer.py
 import unittest
-from jnja2yaml.renderer import render_jinja_to_yaml
+from jnjrender.renderer import render_jinja_to_yaml
 
 class TestRenderer(unittest.TestCase):
     def test_render_jinja_to_yaml(self):

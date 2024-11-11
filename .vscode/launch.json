@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+ 
+        {
+            "name": "Python: jnjrender test camera",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "jnjrender/cli.py",
+            "console": "integratedTerminal",
+            "args":["tests/camera_template.j2" "tests/ioc_test_init.yaml","--output","tests/camera_template.yaml"],
+            "justMyCode": true,
+            "env": {
+                
+            }
+        }
+
+
+    ]
+}
