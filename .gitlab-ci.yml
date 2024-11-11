@@ -33,4 +33,4 @@ pypi-publish:
   only:
     - main  # Optional: Restrict this stage to specific branches
   dependencies:
-    - beamline-opi-gen
+    - test
