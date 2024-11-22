@@ -19,6 +19,8 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
     except FileNotFoundError:
         print(f"Error: YAML file '{yaml_file}' does not exist.")
         return
+    if output_file:
+        print(f"* rendering '{jinja_file}' with YAML file '{yaml_file}' into '{output_file}'")
 
     # Render template with variables
     template = Template(template_content)

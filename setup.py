@@ -4,9 +4,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="jnjrender",
-    version="0.2.0",
+    version="0.2.1",
     packages=find_packages(),
-    description="An utility to render Jinja2 templates in rendered text",
+    description="An utility to render Jinja2 templates in rendered text, taking a yaml environment ",
     author="Andrea Michelotti",
     install_requires=[
         "jinja2",
