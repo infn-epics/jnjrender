@@ -1,26 +1,45 @@
 import argparse
+import os
 import yaml
 from jinja2 import Template
 
 def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
-    # Load Jinja2 template
-    with open(jinja_file) as file:
-        template_content = file.read()
-    template = Template(template_content)
-    
-    # Load YAML variables
-    with open(yaml_file) as file:
-        variables = yaml.safe_load(file)
-    
+    try:
+        # Load Jinja2 template
+        with open(jinja_file) as file:
+            template_content = file.read()
+    except FileNotFoundError:
+        print(f"Error: Jinja2 file '{jinja_file}' does not exist.")
+        return
+
+    try:
+        # Load YAML variables
+        with open(yaml_file) as file:
+            variables = yaml.safe_load(file)
+    except FileNotFoundError:
+        print(f"Error: YAML file '{yaml_file}' does not exist.")
+        return
+
     # Render template with variables
+    template = Template(template_content)
     rendered_content = template.render(variables)
-    
+
     # Output to file or stdout
     if output_file:
-        with open(output_file, 'w') as file:
-            file.write(rendered_content)
-            print(f"* rendered {jinja_file}->{output_file} using {yaml_file}")
+        try:
+            # Get the file permissions of the Jinja file
+            jinja_permissions = os.stat(jinja_file).st_mode
 
+            # Write the rendered content to the output file
+            with open(output_file, 'w') as file:
+                file.write(rendered_content)
+            
+            # Apply the same permissions as the Jinja file to the output file
+            os.chmod(output_file, jinja_permissions)
+            
+            print(f"* rendered {jinja_file} -> {output_file} using {yaml_file}")
+        except Exception as e:
+            print(f"Error writing to output file '{output_file}': {e}")
     else:
         print(rendered_content)
 

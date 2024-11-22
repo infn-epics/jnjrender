@@ -6,13 +6,13 @@
     "configurations": [
  
         {
-            "name": "Python: jnjrender test camera",
+            "name": "Python: jnjrender test",
             "type": "python",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "program": "jnjrender/cli.py",
             "console": "integratedTerminal",
-            "args":["tests/camera_template.j2" "tests/ioc_test_init.yaml","--output","tests/camera_template.yaml"],
+            "args":["tests/icpdas.j2","tests/icpdas.j2.init.yaml","--output","tests/refs/icpdas.yaml"],
             "justMyCode": true,
             "env": {
                 

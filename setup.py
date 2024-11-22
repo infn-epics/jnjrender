@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="jnjrender",
-    version="0.1.1",
+    version="0.2.0",
     packages=find_packages(),
     description="An utility to render Jinja2 templates in rendered text",
     author="Andrea Michelotti",
