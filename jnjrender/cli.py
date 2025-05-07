@@ -15,9 +15,20 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
     # Check if jinja_file is a directory
     if os.path.isdir(jinja_file):
         if "template" in variables:
-            jinja_file = os.path.join(jinja_file, f"{variables['template']}.yaml.j2")
+            template_name = f"{variables['template']}.yaml.j2"
+            found_template = None
+            # Search for the template in the directory and subdirectories
+            for root, _, files in os.walk(jinja_file):
+                if template_name in files:
+                    found_template = os.path.join(root, template_name)
+                    break
+            if found_template:
+                jinja_file = found_template
+            else:
+                print(f"Error: Template '{template_name}' not found in directory '{jinja_file}' or its subdirectories.")
+                return
         else:
-            print(f"Error: 'template' key not found in YAML file. Cannot detemine template file from directory '{jinja_file}'.")
+            print(f"Error: 'template' key not found in YAML file. Cannot determine template file from directory '{jinja_file}'.")
             return
 
     try:
