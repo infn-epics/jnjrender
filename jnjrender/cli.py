@@ -5,6 +5,22 @@ from jinja2 import Template
 
 def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
     try:
+        # Load YAML variables
+        with open(yaml_file) as file:
+            variables = yaml.safe_load(file)
+    except FileNotFoundError:
+        print(f"Error: YAML file '{yaml_file}' does not exist.")
+        return
+
+    # Check if jinja_file is a directory
+    if os.path.isdir(jinja_file):
+        if "template" in variables:
+            jinja_file = os.path.join(jinja_file, f"{variables['template']}.yaml.j2")
+        else:
+            print(f"Error: 'template' key not found in YAML file. Cannot detemine template file from directory '{jinja_file}'.")
+            return
+
+    try:
         # Load Jinja2 template
         with open(jinja_file) as file:
             template_content = file.read()
@@ -12,13 +28,6 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
         print(f"Error: Jinja2 file '{jinja_file}' does not exist.")
         return
 
-    try:
-        # Load YAML variables
-        with open(yaml_file) as file:
-            variables = yaml.safe_load(file)
-    except FileNotFoundError:
-        print(f"Error: YAML file '{yaml_file}' does not exist.")
-        return
     if output_file:
         print(f"* rendering '{jinja_file}' with YAML file '{yaml_file}' into '{output_file}'")
 
@@ -47,7 +56,7 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Render a Jinja2 file with YAML variables.")
-    parser.add_argument("jinja_file", help="Path to the Jinja2 template file.")
+    parser.add_argument("jinja_file", help="Path to the Jinja2 template file or directory where to find 'template'.")
     parser.add_argument("yaml_file", help="Path to the YAML file with variables.")
     parser.add_argument("--output", "-o", help="File to write rendered output. Prints to stdout if not specified.")
     
