@@ -26,10 +26,10 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
                 jinja_file = found_template
             else:
                 print(f"Error: Template '{template_name}' not found in directory '{jinja_file}' or its subdirectories.")
-                return
+                return -1
         else:
             print(f"Error: 'template' key not found in YAML file. Cannot determine template file from directory '{jinja_file}'.")
-            return
+            return -2
 
     try:
         # Load Jinja2 template
@@ -37,7 +37,7 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
             template_content = file.read()
     except FileNotFoundError:
         print(f"Error: Jinja2 file '{jinja_file}' does not exist.")
-        return
+        return -3
 
     if output_file:
         print(f"* rendering '{jinja_file}' with YAML file '{yaml_file}' into '{output_file}'")
@@ -65,6 +65,7 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
     else:
         print(rendered_content)
 
+    return 0
 def main():
     parser = argparse.ArgumentParser(description="Render a Jinja2 file with YAML variables.")
     parser.add_argument("jinja_file", help="Path to the Jinja2 template file or directory where to find 'template'.")
@@ -72,7 +73,7 @@ def main():
     parser.add_argument("--output", "-o", help="File to write rendered output. Prints to stdout if not specified.")
     
     args = parser.parse_args()
-    render_jinja_to_yaml(args.jinja_file, args.yaml_file, args.output)
+    return render_jinja_to_yaml(args.jinja_file, args.yaml_file, args.output)
     
 if __name__ == "__main__":
     main()
