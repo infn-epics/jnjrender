@@ -2,9 +2,12 @@
 
 from setuptools import setup, find_packages
 
+# Read version from the package
+from jnjrender import __version__
+
 setup(
     name="jnjrender",
-    version="1.0.4",
+    version=__version__,
     packages=find_packages(),
     description="An utility to render Jinja2 templates in rendered text, taking a yaml environment ",
     author="Andrea Michelotti",

@@ -2,20 +2,15 @@ import argparse
 import os
 import yaml
 from jinja2 import Template
+import shutil
+from jnjrender import __version__
 
-def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
-    try:
-        # Load YAML variables
-        with open(yaml_file) as file:
-            variables = yaml.safe_load(file)
-    except FileNotFoundError:
-        print(f"Error: YAML file '{yaml_file}' does not exist.")
-        return 1  # Error code 1: YAML file not found
+def render_jinja_to_yaml(jinja_file, variables, template_name, yaml_file,output_file=None):
+    
 
     # Check if jinja_file is a directory
     if os.path.isdir(jinja_file):
-        if "template" in variables:
-            template_name = f"{variables['template']}.yaml.j2"
+        if template_name and template_name !="":
             found_template = None
             # Search for the template in the directory and subdirectories
             for root, _, files in os.walk(jinja_file):
@@ -73,13 +68,78 @@ def render_jinja_to_yaml(jinja_file, yaml_file, output_file=None):
     return 0  # Success
 
 def main():
-    parser = argparse.ArgumentParser(description="Render a Jinja2 file with YAML variables.")
-    parser.add_argument("jinja_file", help="Path to the Jinja2 template file or directory where to find 'template'.")
-    parser.add_argument("yaml_file", help="Path to the YAML file with variables.")
-    parser.add_argument("--output", "-o", help="File to write rendered output. Prints to stdout if not specified.")
-    
+    parser = argparse.ArgumentParser(description="Render a Jinja2 file/directory with YAML variables.")
+    parser.add_argument("jinja_file",nargs="?", help="Path to the Jinja2 template file or directory.")
+    parser.add_argument("yaml_file",nargs="?", help="Path to the YAML file with variables.")
+    parser.add_argument("--output", "-o", help="File or directory to write rendered output. Prints to stdout if not specified.")
+    parser.add_argument("--auto", action="store_true", help="Use special 'template' key in YAML file to find the Jinja2 template.")
+    parser.add_argument("--template", help="If the Jinja2 file is a directory and the ourput also, use the sepecified template file/directory.")
+    parser.add_argument("--version", action="store_true", help="Show the version and exit")
+
     args = parser.parse_args()
-    exit_code = render_jinja_to_yaml(args.jinja_file, args.yaml_file, args.output)
+    if args.version:
+        print(f"version {__version__}")
+        exit(0)
+
+    if not args.jinja_file:
+        print("Error: The 'jinja file/directory template' argument is required.")
+        exit(1)
+
+    if not args.yaml_file:
+        print("Error: The 'yaml file' argument is required.")
+        exit(1)
+    try:
+        # Load YAML variables
+        with open(args.yaml_file) as file:
+            variables = yaml.safe_load(file)
+    except FileNotFoundError:
+        print(f"Error: YAML file '{yaml_file}' does not exist.")
+        exit(1)  # Error code 1: YAML file not found
+    template_name= None
+    template_dir= None
+    if args.template and ags.template != "":
+        template_name = f"{args.template}.yaml.j2"
+        template_dir= args.template
+    if args.auto and 'template' in variables:
+        template_name = f"{variables['template']}.yaml.j2"
+        template_dir= variables['template']
+        
+    # If both are directories, copy contents then render in the destination
+    if os.path.isdir(args.jinja_file) and os.path.isdir(args.output):
+        # If template_dir is set, find its full path under args.jinja_file
+        source_dir = args.jinja_file
+        if template_dir:
+            found = False
+            for root, dirs, files in os.walk(args.jinja_file):
+                if os.path.basename(root) == template_dir:
+                    source_dir = root
+                    found = True
+                    break
+            if not found:
+                print(f"Error: Template directory '{template_dir}' not found under '{args.jinja_file}'")
+                exit(7)  # Error code 7: Template directory not found
+
+        print(f"* Copying and rendering contents of '{source_dir}' to '{args.output}'")
+        for root, dirs, files in os.walk(source_dir):
+            rel_path = os.path.relpath(root, source_dir)
+            dest_root = os.path.join(args.output, rel_path) if rel_path != "." else args.output
+            os.makedirs(dest_root, exist_ok=True)
+            for file in files:
+                src_file = os.path.join(root, file)
+                dest_file = os.path.join(dest_root, file)
+                if not os.path.exists(dest_file):
+                    shutil.copy2(src_file, dest_file)
+        # Render all .j2 files in the destination directory
+        for root, _, files in os.walk(args.output):
+            for file in files:
+                if file.endswith(".j2"):
+                    jinja_file_path = os.path.join(root, file)
+                    output_file_path = os.path.join(root, file.replace(".j2", ".yaml"))
+                    exit_code = render_jinja_to_yaml(jinja_file_path, variables,template_name, args.yaml_file, output_file_path)
+                    if exit_code != 0:
+                        exit(exit_code)
+        exit(0)  # Success
+    exit_code = render_jinja_to_yaml(args.jinja_file, variables, template_name, args.yaml_file,args.output)
     exit(exit_code)  # Exit with the appropriate error code
     
 if __name__ == "__main__":
