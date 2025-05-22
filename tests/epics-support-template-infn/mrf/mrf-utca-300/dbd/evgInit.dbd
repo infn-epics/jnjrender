@@ -1,0 +1,24 @@
+registrar(evgMrmRegistrar)
+driver(drvEvgMrm)
+include "mrmShared.dbd"
+
+#evgTrigEvt.db
+device( bo, VME_IO, devBoEvgTrigEvtMxc, "EVG Trig Evt Mxc")
+
+device( bo, VME_IO, devBoEvgTrigEvtAc, "EVG Trig Evt AC")
+
+device( bo, VME_IO, devBoEvgTrigEvtInp, "EVG TrigEvt")
+
+
+#evgDbus.db
+device( bo,   VME_IO, devBoEvgDbusSrcInp, "EVG Dbus")
+
+
+registrar(asub_evg)
+registrar(asub_nsls2_evg)
+
+# Sequencer debug information
+# 0 - No info
+# 1 - Print for each operation
+# 2 - More details
+variable(seqConstDebug,int)

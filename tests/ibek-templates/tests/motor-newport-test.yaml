@@ -1,0 +1,19 @@
+iocname: "vitara"
+asset: "Vitara RF SPARC"
+template: "motor"
+devtype: newport
+devgroup: rf
+iocprefix: "SPARC:MOT"
+iocroot: "VITARA01"
+server: "192.168.197.105"
+port: 4002
+iocexit: true
+motor:
+  devices:
+    - name: "m0"
+      axid: 0
+      dllm: -25
+      dhlm: 25
+      home: 1
+      start: 10
+      velo: 1

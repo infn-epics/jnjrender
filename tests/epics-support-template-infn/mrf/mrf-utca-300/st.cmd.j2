@@ -1,0 +1,75 @@
+#!{{iocbin}}
+
+## Register all support components
+dbLoadDatabase("dbd/mrf.dbd")
+mrf_registerRecordDeviceDriver(pdbbase)
+epicsEnvSet("AUTOSAVE", {{autosave_dir}})
+
+
+epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES","10000000")
+
+{%- for dev in devices %}
+{%- set prefix = iocprefix %}
+{% if dev.prefix is defined %}
+{%- set prefix = dev.prefix %}
+{%- endif %}
+## device TYPE {{dev.devtype}} ### 
+## {{dev.name}} ##
+{%- if dev.devtype == "evr300" %}
+mrmEvrSetupPCI("{{dev.name}}","{{dev.bus}}:{{dev.slot}}.{{dev.func}}","UNIV")
+dbLoadRecords("db/evr-mtca-300u.uv.db","P={{prefix}}:{{dev.name}}:, EVR={{dev.name}}")
+
+{%- endif %}
+{%- if dev.devtype == "evg300" %}
+mrmEvgSetupPCI("{{dev.name}}","{{dev.bus}}:{{dev.slot}}.{{dev.func}}")
+dbLoadRecords("db/evm-mtca-300.uv.db","P={{prefix}}:{{dev.name}}:, EVG={{dev.name}}")
+dbLoadRecords("db/evm-mtca-300-evr.uv.db","P={{prefix}}:{{dev.name}}:,T=U, EVG={{dev.name}}")
+{%- endif %}
+#########
+{%- endfor %}
+
+# save_restoreDebug(2)
+dbLoadRecords("db/save_restoreStatus.db", "P={{iocprefix}}-AS:")
+save_restoreSet_status_prefix("{{iocprefix}}-AS:")
+
+set_savefile_path("${AUTOSAVE}")
+set_requestfile_path("${AUTOSAVE}")
+
+set_pass0_restoreFile("mrf_settings.sav")
+set_pass0_restoreFile("mrf_values.sav")
+set_pass1_restoreFile("mrf_values.sav")
+set_pass1_restoreFile("mrf_waveforms.sav")
+# disable use of current time until validation is implemented
+var(mrmGTIFEnable, 0)
+
+iocInit()
+
+makeAutosaveFileFromDbInfo("${AUTOSAVE}/mrf_settings.req", "autosaveFields_pass0")
+makeAutosaveFileFromDbInfo("${AUTOSAVE}/mrf_values.req", "autosaveFields")
+makeAutosaveFileFromDbInfo("${AUTOSAVE}/mrf_waveforms.req", "autosaveFields_pass1")
+
+create_monitor_set("mrf_settings.req", 5 , "")
+create_monitor_set("mrf_values.req", 5 , "")
+create_monitor_set("mrf_waveforms.req", 30 , "")
+
+epicsThreadSleep(1.5)
+{%- for dev in devices %}
+{%- set prefix = iocprefix %}
+{% if dev.prefix is defined %}
+{%- set prefix = dev.prefix %}
+{%- endif %}
+
+{%- if dev.iocinit is sequence %}
+###### initializations {{dev.name}}
+{%- for param in dev.iocinit %}
+dbpf ("{{prefix}}:{{dev.name}}:{{param.name}}","{{param.value}}")
+{%- endfor %}
+######
+{%- endif %}
+{%- endfor %}
+dbl
+dbl("*") > {{config_dir}}/pvlist.txt
+
+
+    
+# end

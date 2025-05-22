@@ -1,0 +1,47 @@
+
+include "evrbase.db"
+
+
+record(mbbo, "$(P)Src$(s=:)Clk-SP") {
+  field(DTYP, "Obj Prop uint16")
+  field(OUT , "@OBJ=$(OBJ), PROP=Clock Mode")
+  field(PINI, "YES")
+  field(ZRST, "EVG")
+  field(ONST, "Internal")
+  field(TWST, "EVG FB:Internal")
+  field(THST, "EVG FB:stop")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "2")
+  field(THVL, "3")
+  field(FRSV, "INVALID")
+  field(FVSV, "INVALID")
+  field(SXSV, "INVALID")
+  field(SVSV, "INVALID")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(FLNK, "$(P)Src$(s=:)Clk-RB")
+  info(autosaveFileds_pass0, "VAL")
+}
+
+record(mbbi, "$(P)Src$(s=:)Clk-RB") {
+  field(DTYP, "Obj Prop uint16")
+  field(INP , "@OBJ=$(OBJ), PROP=Clock Mode")
+  field(PINI, "YES")
+  field(ZRST, "EVG")
+  field(ONST, "Internal")
+  field(TWST, "EVG FB:Internal")
+  field(THST, "EVG FB:stop")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "2")
+  field(THVL, "3")
+}
+

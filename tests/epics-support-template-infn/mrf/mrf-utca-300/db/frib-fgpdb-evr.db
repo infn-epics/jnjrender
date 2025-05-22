@@ -1,0 +1,1888 @@
+# Base record set for an EVR
+#
+# Macros:
+#  P = record name prefix
+#  OBJ = devObj name
+#  EVNT1HZ = DB event number for the 1 second tick
+
+# Master enable for the EVR. If not set then very little will happen.
+#
+# If disabled, an EVR will automatically enable when the event link becomes active.
+# This allows for bumpless cold starts. For this reason the enable property
+# should not be included in any autosave request files.
+# cf. $(SYS){$(D)}Link:Init-FO_
+#
+record(bo, "$(SYS){$(D)}Ena-Sel") {
+  field(DESC, "Master HW Enable")
+  field(DTYP, "Obj Prop bool")
+  field(OUT , "@OBJ=$(EVR), PROP=Enable")
+  field(MASK, "1")
+  field(ZNAM, "Disabled")
+  field(ONAM, "Enabled")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# The number of times the hardware heartbeat timer has expired.
+#
+# This indicates that the EVG is not sending event code 122
+# which may mean that it is misconfigured or hung.
+#
+record(longin, "$(SYS){$(D)}Cnt:LinkTimo-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR), PROP=HB Timeout Count")
+  field(SCAN, "I/O Intr")
+  field(DESC, "# of heartbeat timeout")
+}
+
+record(bo, "$(SYS){$(D)}ExtInhib-Sel") {
+  field(DTYP, "Obj Prop bool")
+  field(OUT , "@OBJ=$(EVR), PROP=External Inhibit")
+  field(PINI, "YES")
+  field(DESC, "Use HW trigger inhibit (EVRTG only)")
+  field(MASK, "1")
+  field(ZNAM, "Use Inhibit")
+  field(ONAM, "Always Permit")
+  field(OSV, "MINOR")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Status of phase locked loop which synchronizes an EVR's local oscilator
+# with the phase of the EVG's oscilator. Outputs will not be stable unless the PLL is locked.
+#
+# Except for immediately (<< 1 sec) after a change to the fractional synthesizer, this property
+# should always read as true (locked). Reading false for longer then one second is likely an
+# indication that the fractional synthesize is misconfigured, or that a hardware fault has occured.
+#
+# eg. The fiber is unplugged
+#
+record(bi, "$(SYS){$(D)}Link-Sts") {
+  field(DTYP, "Obj Prop bool")
+  field(INP , "@OBJ=$(EVR), PROP=Link Status")
+  field(DESC, "Status of event link")
+  field(SCAN, "1 second")
+  field(ZNAM, "Fail")
+  field(ONAM, "OK")
+  field(ZSV , "MAJOR")
+  field(FLNK, "$(SYS){$(D)}Cnt:RxErr-I")
+}
+
+record(longin, "$(SYS){$(D)}DBus-I") {
+  field(DTYP, "Obj Prop uint16")
+  field(DESC, "Read the DBus state")
+  field(INP , "@OBJ=$(EVR), PROP=DBus State")
+  info(autosaveFields_pass0, "SCAN")
+}
+
+# The number of event link errors which have occurred.
+record(longin, "$(SYS){$(D)}Cnt:RxErr-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "Receive Error Count")
+  field(INP , "@OBJ=$(EVR), PROP=Receive Error Count")
+  field(TSEL, "$(SYS){$(D)}Link-Sts.TIME")
+  field(FLNK, "$(SYS){$(D)}Cnt:HwOflw-I")
+}
+
+# Counter the number of hardware event buffer overflows.
+#
+# There is a single hardware buffer for all event codes.
+# When it overflows arbitrary events will fail to be delivered to software.
+# This can cause the timestamp to falsely be invalidated,
+# and can disrupt database processing which depends on event reception.
+#
+# An overflow does not effect physical outputs.
+# This is a serious error which should be corrected.
+record(longin, "$(SYS){$(D)}Cnt:HwOflw-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "FIFO Hw Overflow Count")
+  field(INP , "@OBJ=$(EVR), PROP=FIFO Overflow Count")
+  field(TSEL, "$(SYS){$(D)}Cnt:RxErr-I.TIME")
+  field(FLNK, "$(SYS){$(D)}Cnt:SwOflw-I")
+}
+
+# Counts overflows in all of the per event software buffers.
+#
+# This indicates that the period between successive events is shorter
+# then the runtime of the code (callbacks, and database processing)
+# that is causes. Extra events are being dropped and cause no action.
+#
+# Actions of other event codes are not effected.
+#
+# cf. var("mrmEvrFIFOPeriod") to change/disable soft rate limit
+#
+# Actions of other event codes are not effected.
+record(longin, "$(SYS){$(D)}Cnt:SwOflw-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "FIFO Sw Overrate Count")
+  field(INP , "@OBJ=$(EVR), PROP=FIFO Over rate")
+  field(TSEL, "$(SYS){$(D)}Cnt:RxErr-I.TIME")
+  field(FLNK, "$(SYS){$(D)}Link:Init-FO_")
+}
+
+# Detect the first time the event link
+# is online.  Then set master enable.
+record(calcout, "$(SYS){$(D)}Link:Init-FO_") {
+  field(ASG, "private")
+  field(DESC, "Detect initial link up")
+  field(INPA, "$(SYS){$(D)}Link-Sts")
+  field(CALC, "A")
+  field(OUT , "$(SYS){$(D)}Ena-Sel PP")
+  field(OOPT, "Transition To Non-zero")
+  field(ODLY, "1.0")
+  field(TSEL, "$(SYS){$(D)}Link-Sts.TIME")
+}
+
+# Frequency of an EVR's local oscilator.
+#
+# This must be close enough to the EVG master oscilator to allow the phase locked loop in the EVR to lock.
+record(ao, "$(SYS){$(D)}Link:Clk-SP") {
+  field(DTYP, "Obj Prop double")
+  field(OUT , "@OBJ=$(EVR), PROP=Clock")
+  field(PINI, "YES")
+  field(DESC, "Event Link speed")
+  field(VAL , "124.916")
+  field(EGU , "MHz")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e-6")
+  field(HOPR, "150")
+  field(LOPR, "50")
+  field(DRVH, "150")
+  field(DRVL, "50")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)}Link:Clk-I")
+  info(autosaveFields_pass0, "VAL EGU ESLO HOPR LOPR DRVH DRVL PREC")
+}
+
+record(ai, "$(SYS){$(D)}Link:Clk-I") {
+  field(DTYP, "Obj Prop double")
+  field(INP , "@OBJ=$(EVR), PROP=Clock")
+  field(DESC, "Event Link speed")
+  field(PINI, "YES")
+  field(UDF , "0")
+  field(EGU , "MHz")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e-6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)}Link:ClkErr-I")
+  info(autosaveFields_pass0, "EGU ESLO HOPR LOPR PREC")
+}
+
+record(calc, "$(SYS){$(D)}Link:ClkErr-I") {
+  field(CALC, "(A-B)*1000")
+  field(EGU , "KHz")
+  field(PREC, "3")
+  field(INPA, "$(SYS){$(D)}Link:Clk-SP")
+  field(INPB, "$(SYS){$(D)}Link:Clk-I")
+  field(TSEL, "$(SYS){$(D)}Link:Clk-I.TIME")
+  field(FLNK, "$(SYS){$(D)}Link:ClkPeriod-I")
+  info(autosaveFields_pass0, "EGU CALC PREC")
+}
+
+# Intended for use in calculations
+record(calc, "$(SYS){$(D)}Link:ClkPeriod-I") {
+  field(DESC, "Event period")
+  field(CALC, "B/A")
+  field(EGU , "s")
+  field(PREC, "3")
+  field(INPA, "$(SYS){$(D)}Link:Clk-SP")
+  field(INPB, "$(SYS){$(D)}Link:Clk-SP.ESLO")
+  field(TSEL, "$(SYS){$(D)}Link:Clk-I.TIME")
+}
+
+record(longin, "$(SYS){$(D)}Cnt:IRQ-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "Interrupt Count")
+  field(SCAN, "1 second")
+  field(INP , "@OBJ=$(EVR), PROP=Interrupt Count")
+  field(FLNK, "$(SYS){$(D)}Rate:IRQ-I")
+}
+
+record(calc, "$(SYS){$(D)}Rate:IRQ-I") {
+  field(DESC, "Interrupt rate")
+  field(INPA, "$(SYS){$(D)}Cnt:IRQ-I")
+  field(CALC, "C:=A-B;B:=A;C")
+  field(EGU , "Hz")
+}
+
+record(longin, "$(SYS){$(D)}Cnt:FIFOEvt-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "FIFO Event Count")
+  field(SCAN, "1 second")
+  field(INP , "@OBJ=$(EVR), PROP=FIFO Event Count")
+  field(FLNK, "$(SYS){$(D)}Rate:FIFOEvt-I")
+}
+
+record(calc, "$(SYS){$(D)}Rate:FIFOEvt-I") {
+  field(DESC, "FIFO reception rate")
+  field(INPA, "$(SYS){$(D)}Cnt:FIFOEvt-I")
+  field(CALC, "C:=A-B;B:=A;C")
+  field(EGU , "evt/s")
+  field(FLNK, "$(SYS){$(D)}Cnt:FIFOLoop-I")
+}
+
+record(longin, "$(SYS){$(D)}Cnt:FIFOLoop-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "FIFO Loop Count")
+  field(INP , "@OBJ=$(EVR), PROP=FIFO Loop Count")
+  field(FLNK, "$(SYS){$(D)}Rate:FIFOLoop-I")
+}
+
+record(calc, "$(SYS){$(D)}Rate:FIFOLoop-I") {
+  field(DESC, "FIFO service rate")
+  field(INPA, "$(SYS){$(D)}Cnt:FIFOLoop-I")
+  field(CALC, "C:=A-B;B:=A;C")
+  field(EGU , "Hz")
+  field(FLNK, "$(SYS){$(D)}FIFOCap-I")
+}
+
+# average number of events taken from the FIFO during each loop
+record(calc, "$(SYS){$(D)}FIFOCap-I") {
+  field(DESC, "FIFO capacity utilization")
+  field(INPA, "$(SYS){$(D)}Rate:FIFOEvt-I")
+  field(INPB, "$(SYS){$(D)}Rate:FIFOLoop-I")
+  field(INPC, "5.11")
+  field(CALC, "A/B/C")
+  field(EGU , "%")
+  field(HIHI, "98")
+  field(HIGH, "80")
+  field(LOW , "-1")
+  field(HHSV, "MAJOR")
+  field(HSV , "MINOR")
+  field(LSV , "INVALID")
+  info(autosaveFields_pass0, "HIHI HIGH LOW")
+}
+
+record(bi, "$(SYS){$(D)}Pll-Sts") {
+  field(DTYP, "Obj Prop bool")
+  field(INP , "@OBJ=$(EVR), PROP=PLL Lock Status")
+  field(SCAN, "1 second")
+  field(PINI, "YES")
+  field(DESC, "Status of PLL")
+  field(ZNAM, "Error")
+  field(ONAM, "OK")
+  field(ZSV , "MAJOR")
+}
+
+record(stringin, "$(SYS){$(D)}HwType-I") {
+  field(DESC, "Hardware type code")
+  field(DTYP, "Obj Prop string")
+  field(INP , "@OBJ=$(EVR), PROP=Model")
+  field(PINI, "YES")
+}
+
+record(stringin, "$(SYS){$(D)}FwVer-I") {
+  field(DESC, "Firmware version")
+  field(DTYP, "Obj Prop string")
+  field(INP , "@OBJ=$(EVR), PROP=Version")
+  field(PINI, "YES")
+}
+
+record(stringin, "$(SYS){$(D)}SwVer-I") {
+  field(DESC, "Software version")
+  field(DTYP, "Obj Prop string")
+  field(INP , "@OBJ=$(EVR), PROP=Sw Version")
+  field(PINI, "YES")
+}
+
+record(stringin, "$(SYS){$(D)}CommitHash-I") {
+  field(DESC, "Commit hash")
+  field(DTYP, "Obj Prop string")
+  field(INP , "@OBJ=$(EVR), PROP=CommitHash")
+  field(PINI, "YES")
+}
+
+# Geographic location (eg. slot number)
+# if available, fallback to logical bus address
+record(stringin, "$(SYS){$(D)}Pos-I") {
+  field(DESC, "Physical card position")
+  field(DTYP, "Obj Prop string")
+  field(INP , "@OBJ=$(EVR), PROP=Position")
+  field(PINI, "YES")
+}
+
+record(fanout, "$(SYS){$(D)}Time:Init-FO_") {
+  field(ASG, "private")
+  field(PINI, "YES")
+  field(LNK1, "$(SYS){$(D)}Time:Clock-SP")
+  field(LNK2, "$(SYS){$(D)}Time:Src-Sel")
+}
+
+# Indicates if the EVR has a current, valid timestamp.
+# Condition under which timestamp is declared invalid include:
+#
+# * TS counter reset event received, but seconds value not updated.
+# * Found timestamp with previous invalid value. Catches old timestamp in buffers.
+# * TS counter exceeded limit (eg. missed reset event)
+# * New seconds value is less then the last valid values,
+#   or more then two greater then the last valid value. (Light Source time model only).
+#   This will reject single bad values sent by the EVG.
+# * Event Link error (Status is error).
+#
+# The timestamp will become valid when a new seconds value is received from the EVG.
+record(bi, "$(SYS){$(D)}Time:Valid-Sts") {
+  field(DTYP, "Obj Prop bool")
+  field(INP , "@OBJ=$(EVR), PROP=Timestamp Valid")
+  field(PINI, "YES")
+  field(SCAN, "I/O Intr")
+  field(ZSV , "MAJOR")
+  field(ZNAM, "Invalid")
+  field(ONAM, "Valid")
+}
+
+record(mbbo, "$(SYS){$(D)}Time:Src-Sel") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)}Time:Src-Sel_")
+  field(PINI, "YES")
+  field(ZRST, "Event clock")
+  field(ONST, "Mapped code(s)")
+  field(TWST, "DBus 4")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "2")
+  field(THSV, "INVALID")
+  field(FRSV, "INVALID")
+  field(FVSV, "INVALID")
+  field(SXSV, "INVALID")
+  field(SVSV, "INVALID")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  field(FLNK, "$(SYS){$(D)}Time:Src-Sel_")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Determines what causes the timestamp event counter to tick. There are three possible choices.
+#
+# * Event clock Use an integer divisor of the EVR's local oscilator.
+# * Mapped code(s) Increments the counter whenever certain events arrive. These codes can be defined using special mapping records.
+# * DBus 4 Increments on the 0->1 transition of DBus bit #4.
+#
+record(longout, "$(SYS){$(D)}Time:Src-Sel_") {
+  field(ASG, "private")
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR), PROP=Timestamp Source")
+  field(FLNK, "$(SYS){$(D)}Time:Clock-I")
+}
+
+# Specifies the rate at which the timestamp event counter will be incremented. This determines the resolution of all timestamps.
+#
+# This setting is used in conjunction with the 'Timestamp Source'.
+#
+# When the timestamp source is set to "Event clock" this property is used
+# to compute an integer divider from the EVR's local oscilator frequency
+# to the given frequency. Since this may not be exact it is recommended
+# to read back the actual divider setting via the "Timestamp Prescaler" property.
+#
+record(ao, "$(SYS){$(D)}Time:Clock-SP") {
+  field(DTYP, "Obj Prop double")
+  field(OUT , "@OBJ=$(EVR), PROP=Timestamp Clock")
+  field(DESC, "Timestamp frequency")
+  field(PINI, "YES")
+  field(VAL , "124.916")
+  field(EGU , "MHz")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e-6")
+  field(HOPR, "150")
+  field(LOPR, "0")
+  field(DRVH, "150")
+  field(DRVL, "0")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)}Time:Clock-I")
+  info(autosaveFields_pass0, "VAL EGU ESLO HOPR LOPR DRVH DRVL PREC")
+}
+
+record(ai, "$(SYS){$(D)}Time:Clock-I") {
+  field(DTYP, "Obj Prop double")
+  field(INP , "@OBJ=$(EVR), PROP=Timestamp Clock")
+  field(SCAN, "1 second")
+  field(DESC, "Timestamp frequency")
+  field(PINI, "RUN")
+  field(UDF , "0")
+  field(EGU , "MHz")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e-6")
+  field(HOPR, "150")
+  field(LOPR, "0")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)}Time:Div-I")
+}
+
+# When using the "Event clock" timestamp source this will return the actual divisor used.
+# In other modes it reads 0.
+#
+record(longin, "$(SYS){$(D)}Time:Div-I") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR), PROP=Timestamp Prescaler")
+  field(DESC, "Timestamp divider")
+}
+
+# Time of last received event 125 (aka. timestamp reset)
+#
+# Due to firmware implementation details, the reception time of 125 does not
+# reflect the reset of the sub-seconds counter, and will never have nsec==0.
+#
+record(stringin, "$(SYS){$(D)}Time-I") {
+  field(DTYP, "EVR Timestamp")
+  field(INP , "@OBJ=$(EVR), Code=125")
+  field(SCAN, "Event")
+  field(EVNT, "125")
+  field(TSE , "-2")
+}
+
+# Selects Event link data mode.
+#
+# This chooses between DBus only, and DBus+Buffer (default) modes.
+# In DBus only mode Data Buffer reception is not possible.
+#
+# Must match EVG setting
+#
+record(bo, "$(SYS){$(D)}Link:RxMode-Sel") {
+  field(DESC, "Downstream data mode")
+  field(DTYP, "Obj Prop bool")
+  field(OUT , "@OBJ=$(EVR):BUFRX, PROP=Enable")
+  field(PINI, "YES")
+  field(VAL , "1")
+  field(ZNAM, "DBus only")
+  field(ONAM, "DBus+Buffer")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(waveform, "$(SYS){$(D)}Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+}
+
+record(mbbo, "$(SYS){$(D)}PLL-Bandwidth-Sel") {
+    field( DESC, "EVR Evt Clock Bandwidth")
+    field( DTYP, "Obj Prop uint16")
+    field( OUT,  "@OBJ=$(EVR), PROP=PLL Bandwidth")
+    field( PINI, "YES")
+    field( VAL,  "2")
+    field( ZRST, "Narrow")
+    field( ONST, "Med. Narrow")
+    field( TWST, "Nominal")
+    field( THST, "Med. Wide")
+    field( FRST, "Wide")
+    field( ZRVL, "0")
+    field( ONVL, "1")
+    field( TWVL, "2")
+    field( THVL, "3")
+    field( FRVL, "4")
+    field( FVSV, "INVALID")
+    field( SXSV, "INVALID")
+    field( SVSV, "INVALID")
+    field( EISV, "INVALID")
+    field( NISV, "INVALID")
+    field( TESV, "INVALID")
+    field( ELSV, "INVALID")
+    field( TVSV, "INVALID")
+    field( TTSV, "INVALID")
+    field( FTSV, "INVALID")
+    field( FFSV, "INVALID")
+    field( UNSV, "INVALID")
+    field( FLNK, "$(SYS){$(D)}PLL-Bandwidth-RB")
+    info( autosaveFields_pass0, "VAL")
+}
+
+record(mbbi, "$(SYS){$(D)}PLL-Bandwidth-RB") {
+    field( DESC, "EVR Evt Clock Bandwidth")
+    field( DTYP, "Obj Prop uint16")
+    field( INP,  "@OBJ=$(EVR), PROP=PLL Bandwidth")
+    field( ZRST, "Narrow")
+    field( ONST, "Med. Narrow")
+    field( TWST, "Nominal")
+    field( THST, "Med. Wide")
+    field( FRST, "Wide")
+    field( ZRVL, "0")
+    field( ONVL, "1")
+    field( TWVL, "2")
+    field( THVL, "3")
+    field( FRVL, "4")
+}
+
+# Settings
+
+record(bo, "$(SYS){$(D)}SIMBON_CMD") {
+  field(ZNAM, "Off")
+  field(ONAM, "Beam On")
+  field(OUT , "$(SYS){$(D)}Cnf_CSET_.B3 PP")
+  field(VAL , "0")
+  field(PINI, "YES")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(bo, "$(SYS){$(D)}SIMEVG_CMD") {
+  field(ZNAM, "Normal")
+  field(ONAM, "Sim EVG")
+  field(OSV , "MINOR")
+  field(OUT , "$(SYS){$(D)}Cnf_CSET_.B2 PP")
+  field(VAL , "0")
+  field(PINI, "YES")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(bo, "$(SYS){$(D)}SIMFPS_CMD") {
+  field(ZNAM, "Normal")
+  field(ONAM, "Sim FPS")
+  field(OSV , "MINOR")
+  field(OUT , "$(SYS){$(D)}Cnf_CSET_.B1 PP")
+  field(VAL , "0")
+  field(PINI, "YES")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(bo, "$(SYS){$(D)}EVTBIST_CMD") {
+  field(ZNAM, "Idle")
+  field(ONAM, "Run")
+  field(OUT , "$(SYS){$(D)}Cnf_CSET_.B0 PP")
+  field(VAL , "1")
+  field(PINI, "YES")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbboDirect, "$(SYS){$(D)}Cnf_CSET_") {
+  field(OUT , "$(SYS){$(D)}Cnf_CSET PP")
+  info(autosaveFields_pass0, "B0 B1 B2 B3")
+}
+
+record(longout, "$(SYS){$(D)}Cnf_CSET") {
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR), PROP=Config")
+}
+
+
+record(bo, "$(SYS){$(D)}FrcNOK_CMD") {
+  field(ZNAM, "Idle")
+  field(ONAM, "Force NOK")
+  field(HIGH, "0.1")
+  field(OUT , "$(SYS){$(D)}Cmd_CSET_.B4 PP")
+  field(VAL , "0")
+  field(PINI, "YES")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(bo, "$(SYS){$(D)}ClrNOK_CMD") {
+  field(ZNAM, "Idle")
+  field(ONAM, "Clear NOK")
+  field(HIGH, "0.1")
+  field(OUT , "$(SYS){$(D)}Cmd_CSET_.B3 PP")
+  field(VAL , "0")
+  field(PINI, "YES")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(bo, "$(SYS){$(D)}FrcNPMT_CMD") {
+  field(ZNAM, "Idle")
+  field(ONAM, "Force NPERMIT")
+  field(HIGH, "0.1")
+  field(OUT , "$(SYS){$(D)}Cmd_CSET_.B2 PP")
+  field(VAL , "0")
+  field(PINI, "YES")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbboDirect, "$(SYS){$(D)}Cmd_CSET_") {
+  field(OUT , "$(SYS){$(D)}Cmd_CSET PP")
+  info(autosaveFields_pass0, "B2 B3 B4")
+}
+
+record(longout, "$(SYS){$(D)}Cmd_CSET") {
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR), PROP=Command")
+}
+
+
+# readbacks
+
+record(longin, "$(SYS){$(D)}MCyc_RD") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR), PROP=machineCycles")
+  field(SCAN, ".1 second")
+  field(FLNK, "$(SYS){$(D)}FPSComm_RD")
+}
+
+record(longin, "$(SYS){$(D)}FPSComm_RD") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR), PROP=FPSCommCnt")
+  field(FLNK, "$(SYS){$(D)}FPSStatus_RD")
+}
+
+record(mbbiDirect, "$(SYS){$(D)}FPSStatus_RD") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR), PROP=FPSStatus")
+  field(FLNK, "$(SYS){$(D)}FPSNPMT_RD")
+}
+
+record(bi, "$(SYS){$(D)}FPSNPMT_RD") {
+  field(DESC, "NPERMIT")
+  field(INP , "$(SYS){$(D)}FPSStatus_RD.B0 NPP MSI")
+  field(ZNAM, "OK")
+  field(ONAM, "Error")
+  field(OSV , "MAJOR")
+  field(TSEL, "$(SYS){$(D)}FPSStatus_RD.TIME")
+  field(FLNK, "$(SYS){$(D)}FPSNOK_RD")
+}
+
+record(bi, "$(SYS){$(D)}FPSNOK_RD") {
+  field(DESC, "Not OK out")
+  field(INP , "$(SYS){$(D)}FPSStatus_RD.B1 NPP MSI")
+  field(ZNAM, "OK")
+  field(ONAM, "Trip")
+  field(OSV , "MAJOR")
+  field(TSEL, "$(SYS){$(D)}FPSStatus_RD.TIME")
+  field(FLNK, "$(SYS){$(D)}FPSNOKL_RD")
+}
+
+record(bi, "$(SYS){$(D)}FPSNOKL_RD") {
+  field(DESC, "Not OK out latched")
+  field(INP , "$(SYS){$(D)}FPSStatus_RD.B2 NPP MSI")
+  field(ZNAM, "OK")
+  field(ONAM, "Trip")
+  field(OSV , "MAJOR")
+  field(TSEL, "$(SYS){$(D)}FPSStatus_RD.TIME")
+  field(FLNK, "$(SYS){$(D)}FPSNOKIN_RD")
+}
+
+record(bi, "$(SYS){$(D)}FPSNOKIN_RD") {
+  field(DESC, "Not OK in")
+  field(INP , "$(SYS){$(D)}FPSStatus_RD.B3 NPP MSI")
+  field(ZNAM, "OK")
+  field(ONAM, "Trip")
+  field(OSV , "MAJOR")
+  field(TSEL, "$(SYS){$(D)}FPSStatus_RD.TIME")
+  field(FLNK, "$(SYS){$(D)}FPSPRSNT_RD")
+}
+
+record(bi, "$(SYS){$(D)}FPSPRSNT_RD") {
+  field(DESC, "Presense")
+  field(ZNAM, "Missing")
+  field(ONAM, "Present")
+  field(ZSV , "MAJOR")
+  field(INP , "$(SYS){$(D)}FPSStatus_RD.B4 NPP MSI")
+  field(TSEL, "$(SYS){$(D)}FPSStatus_RD.TIME")
+  field(FLNK, "$(SYS){$(D)}FPSSource_RD")
+}
+
+record(longin, "$(SYS){$(D)}FPSSource_RD") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR), PROP=FPSSource")
+  field(FLNK, "$(SYS){$(D)}BeamOnTime_RD")
+}
+
+record(longin, "$(SYS){$(D)}BeamOnTime_RD") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR), PROP=BeamOnTime")
+  field(FLNK, "")
+}
+# Record set for an EVR's programable frequency divider
+#
+# Macros:
+#  SN = scaler record name prefix
+#  P  = base record name prefix
+#  OBJ = devObj name
+#  IDX = ID # corresponding to output mapping codes
+#  MAX = Maximum division
+
+record(bo, "$(SYS){$(D)}PSPolarity-Sel")
+{
+  field(DTYP, "Obj Prop bool")
+  field(DESC, "Polarity of all prescalers")
+  field(OUT , "@OBJ=$(EVR), PROP=PSPolarity")
+  field(PINI, "YES")
+  field(ZNAM, "PS-sync on falling edge")
+  field(ONAM, "PS-sync on rising edge")
+  field(VAL , "0")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longout, "$(SYS){$(D)-PS:0}Div-SP") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "Prescaler 0")
+  field(OUT , "@OBJ=$(EVR):PS0, PROP=Divide")
+  field(PINI, "YES")
+  field(VAL , "2")
+  field(HOPR, "0xffff")
+  field(LOPR, "2")
+  field(DRVH, "0xffff")
+  field(DRVL, "2")
+  field(FLNK, "$(SYS){$(D)-PS:0}Div-RB")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longin, "$(SYS){$(D)-PS:0}Div-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "Prescaler 0")
+  field(INP , "@OBJ=$(EVR):PS0, PROP=Divide")
+  field(FLNK, "$(SYS){$(D)-PS:0}Rate-I")
+}
+
+record(calc, "$(SYS){$(D)-PS:0}Rate-I") {
+  field(DESC, "Output frequency")
+  field(INPA, "$(SYS){$(D)-PS:0}Div-RB NPP")
+  field(INPB, "$(SYS){$(D)}Link:Clk-I CP")
+  field(CALC, "B/A")
+  field(EGU, "MHz")
+  field(PREC, "2")
+}
+
+record(waveform, "$(SYS){$(D)-PS:0}Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+}
+
+record(ao, "$(SYS){$(D)-PS:0}PhasOffs-SP") {
+  field(DESC, "Prescaler 0 Phase Offset")
+  field(EGU , "Deg")
+  field(OMSL, "supervisory")
+  field(HOPR, "359.9999999999")
+  field(LOPR, "0")
+  field(DRVH, "359.9999999999")
+  field(DRVL, "0")
+  field(FLNK, "$(SYS){$(D)-PS:0}PhasOffs-CO_")
+}
+
+record(calcout, "$(SYS){$(D)-PS:0}PhasOffs-CO_") {
+  field(ASG, "private")
+  field(DESC, "Degrees to Event Clock Ticks")
+  field(OUT , "$(SYS){$(D)-PS:0}PhasOffs:Raw-SP PP")
+  field(CALC, "FLOOR(B/360*A)")
+  field(INPA, "$(SYS){$(D)-PS:0}Div-RB")
+  field(INPB, "$(SYS){$(D)-PS:0}PhasOffs-SP")
+}
+
+record(longout, "$(SYS){$(D)-PS:0}PhasOffs:Raw-SP") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "Prescaler 0 Phase Offset")
+  field(OUT , "@OBJ=$(EVR):PS0, PROP=Phase Offset")
+  field(PINI, "YES")
+  field(VAL , "0")
+  field(HOPR, "0xffffffff")
+  field(LOPR, "0")
+  field(DRVH, "0xffffffff")
+  field(DRVL, "0")
+  field(FLNK, "$(SYS){$(D)-PS:0}PhasOffs:Raw-RB")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longin, "$(SYS){$(D)-PS:0}PhasOffs:Raw-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "Prescaler 0 Phase Offset")
+  field(INP , "@OBJ=$(EVR):PS0, PROP=Phase Offset")
+  field(PINI, "YES")
+  field(FLNK, "$(SYS){$(D)-PS:0}PhasOffs-RB")
+}
+
+record(calc, "$(SYS){$(D)-PS:0}PhasOffs-RB") {
+  field(DESC, "Prescaler 0 Phase Offset")
+  field(CALC, "B/A*360")
+  field(EGU , "Deg")
+  field(INPA, "$(SYS){$(D)-PS:0}Div-RB CPP")
+  field(INPB, "$(SYS){$(D)-PS:0}PhasOffs:Raw-RB PP")
+}
+# Record set for an EVR's physical output
+#
+# Macros:
+#  ON = record name prefix
+#  OBJ = devObj name
+#  DESC = Physical label found on output jack
+
+
+record(bo, "$(SYS){$(D)-Out:FP0}Ena-SP") {
+  field(DTYP, "Obj Prop bool")
+  field(DESC, "Output CLK")
+  field(OUT , "@OBJ=$(EVR):OUT:CLK, PROP=Enable")
+  field(PINI, "YES")
+  field(ZNAM, "Disabled")
+  field(ONAM, "Enabled")
+  field(VAL , "1") # Default to enabled
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longout, "$(SYS){$(D)-Out:FP0}Src-SP") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "CLK")
+  field(OUT , "@OBJ=$(EVR):OUT:CLK, PROP=Map")
+  field(FLNK, "$(SYS){$(D)-Out:FP0}Src-FOut_")
+  field(PINI, "YES")
+  field(VAL , "63")
+  info(autosaveFields_pass0, "VAL HOPR LOPR DRVH DRVL")
+}
+
+# Settings
+# Users use will set one of these at a time.
+
+record(mbbo, "$(SYS){$(D)-Out:FP0}Src:Pulse-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP0}Src-SP PP")
+  field(ZRST, "Pulser 0")
+  field(ONST, "Pulser 1")
+  field(VAL , "2")
+  field(ZRVL, "2")
+  field(ONVL, "3")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(SYS){$(D)-Out:FP0}Src:DBus-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP0}Src-SP PP")
+  field(ZRST, "N/A")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(SYS){$(D)-Out:FP0}Src:Scale-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP0}Src-SP PP")
+  field(ZRST, "Prescaler 0")
+  field(ZRVL, "1")
+  field(FVSV, "INVALID")
+  field(SXSV, "INVALID")
+  field(SVSV, "INVALID")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Mapping readback
+
+record(fanout, "$(SYS){$(D)-Out:FP0}Src-FOut_") {
+  field(ASG, "private")
+  field(LNK1, "$(SYS){$(D)-Out:FP0}Src-RB_")
+  field(LNK2, "$(SYS){$(D)-Out:FP0}Src:Pulse-RB")
+  field(LNK3, "$(SYS){$(D)-Out:FP0}Src:DBus-RB")
+  field(LNK4, "$(SYS){$(D)-Out:FP0}Src:Scale-RB")
+  field(LNK5, "$(SYS){$(D)-Out:FP0}Src-Calc_")
+}
+
+record(longin, "$(SYS){$(D)-Out:FP0}Src-RB_") {
+  field(ASG, "private")
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "CLK")
+  field(INP , "@OBJ=$(EVR):OUT:CLK, PROP=Map")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP0}Src:Pulse-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP0}Src-RB_")
+  field(ZRST, "Pulser 0")
+  field(ONST, "Pulser 1")
+  field(ZRVL, "2")
+  field(ONVL, "3")
+  field(UNSV, "MAJOR")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP0}Src:DBus-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP0}Src-RB_")
+  field(ZRST, "N/A")
+  field(ZRVL, "32")
+  field(EISV, "MAJOR")
+  field(NISV, "MAJOR")
+  field(TESV, "MAJOR")
+  field(ELSV, "MAJOR")
+  field(TVSV, "MAJOR")
+  field(TTSV, "MAJOR")
+  field(FTSV, "MAJOR")
+  field(FFSV, "MAJOR")
+  field(UNSV, "MAJOR")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP0}Src:Scale-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP0}Src-RB_")
+  field(ZRST, "Prescaler 0")
+  field(ZRVL, "1")
+  field(FVSV, "MAJOR")
+  field(SXSV, "MAJOR")
+  field(SVSV, "MAJOR")
+  field(EISV, "MAJOR")
+  field(NISV, "MAJOR")
+  field(TESV, "MAJOR")
+  field(ELSV, "MAJOR")
+  field(TVSV, "MAJOR")
+  field(TTSV, "MAJOR")
+  field(FTSV, "MAJOR")
+  field(FFSV, "MAJOR")
+  field(UNSV, "MAJOR")
+  field(UNSV, "MAJOR")
+}
+
+record(aSub, "$(SYS){$(D)-Out:FP0}Src-Calc_") {
+  field(ASG, "private")
+  field(SNAM, "Select String")
+  field(FTA , "STRING")
+  field(FTB , "STRING")
+  field(FTC , "STRING")
+  field(FTVA, "STRING")
+  field(INPA, "$(SYS){$(D)-Out:FP0}Src:Pulse-RB")
+  field(INPB, "$(SYS){$(D)-Out:FP0}Src:DBus-RB")
+  field(INPC, "$(SYS){$(D)-Out:FP0}Src:Scale-RB")
+  field(OUTA, "$(SYS){$(D)-Out:FP0}Src-RB PP")
+}
+
+record(stringin, "$(SYS){$(D)-Out:FP0}Src-RB") {}
+
+# Select which is displayed
+
+record(waveform, "$(SYS){$(D)-Out:FP0}Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+  alias("$(SYS){$(D)-Out:FP0}User-SP")
+}
+# Record set for an EVR's physical output
+#
+# Macros:
+#  ON = record name prefix
+#  OBJ = devObj name
+#  DESC = Physical label found on output jack
+
+
+record(bo, "$(SYS){$(D)-Out:FP1}Ena-SP") {
+  field(DTYP, "Obj Prop bool")
+  field(DESC, "Output TR0")
+  field(OUT , "@OBJ=$(EVR):OUT:TR0, PROP=Enable")
+  field(PINI, "YES")
+  field(ZNAM, "Disabled")
+  field(ONAM, "Enabled")
+  field(VAL , "1") # Default to enabled
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longout, "$(SYS){$(D)-Out:FP1}Src-SP") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "TR0")
+  field(OUT , "@OBJ=$(EVR):OUT:TR0, PROP=Map")
+  field(FLNK, "$(SYS){$(D)-Out:FP1}Src-FOut_")
+  field(PINI, "YES")
+  field(VAL , "63")
+  info(autosaveFields_pass0, "VAL HOPR LOPR DRVH DRVL")
+}
+
+# Settings
+# Users use will set one of these at a time.
+
+record(mbbo, "$(SYS){$(D)-Out:FP1}Src:Pulse-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP1}Src-SP PP")
+  field(ZRST, "Pulser 0")
+  field(ONST, "Pulser 1")
+  field(VAL , "2")
+  field(ZRVL, "2")
+  field(ONVL, "3")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(SYS){$(D)-Out:FP1}Src:DBus-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP1}Src-SP PP")
+  field(ZRST, "N/A")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(SYS){$(D)-Out:FP1}Src:Scale-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP1}Src-SP PP")
+  field(ZRST, "Prescaler 0")
+  field(ZRVL, "1")
+  field(FVSV, "INVALID")
+  field(SXSV, "INVALID")
+  field(SVSV, "INVALID")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Mapping readback
+
+record(fanout, "$(SYS){$(D)-Out:FP1}Src-FOut_") {
+  field(ASG, "private")
+  field(LNK1, "$(SYS){$(D)-Out:FP1}Src-RB_")
+  field(LNK2, "$(SYS){$(D)-Out:FP1}Src:Pulse-RB")
+  field(LNK3, "$(SYS){$(D)-Out:FP1}Src:DBus-RB")
+  field(LNK4, "$(SYS){$(D)-Out:FP1}Src:Scale-RB")
+  field(LNK5, "$(SYS){$(D)-Out:FP1}Src-Calc_")
+}
+
+record(longin, "$(SYS){$(D)-Out:FP1}Src-RB_") {
+  field(ASG, "private")
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "TR0")
+  field(INP , "@OBJ=$(EVR):OUT:TR0, PROP=Map")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP1}Src:Pulse-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP1}Src-RB_")
+  field(ZRST, "Pulser 0")
+  field(ONST, "Pulser 1")
+  field(ZRVL, "2")
+  field(ONVL, "3")
+  field(UNSV, "MAJOR")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP1}Src:DBus-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP1}Src-RB_")
+  field(ZRST, "N/A")
+  field(ZRVL, "32")
+  field(EISV, "MAJOR")
+  field(NISV, "MAJOR")
+  field(TESV, "MAJOR")
+  field(ELSV, "MAJOR")
+  field(TVSV, "MAJOR")
+  field(TTSV, "MAJOR")
+  field(FTSV, "MAJOR")
+  field(FFSV, "MAJOR")
+  field(UNSV, "MAJOR")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP1}Src:Scale-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP1}Src-RB_")
+  field(ZRST, "Prescaler 0")
+  field(ZRVL, "1")
+  field(FVSV, "MAJOR")
+  field(SXSV, "MAJOR")
+  field(SVSV, "MAJOR")
+  field(EISV, "MAJOR")
+  field(NISV, "MAJOR")
+  field(TESV, "MAJOR")
+  field(ELSV, "MAJOR")
+  field(TVSV, "MAJOR")
+  field(TTSV, "MAJOR")
+  field(FTSV, "MAJOR")
+  field(FFSV, "MAJOR")
+  field(UNSV, "MAJOR")
+  field(UNSV, "MAJOR")
+}
+
+record(aSub, "$(SYS){$(D)-Out:FP1}Src-Calc_") {
+  field(ASG, "private")
+  field(SNAM, "Select String")
+  field(FTA , "STRING")
+  field(FTB , "STRING")
+  field(FTC , "STRING")
+  field(FTVA, "STRING")
+  field(INPA, "$(SYS){$(D)-Out:FP1}Src:Pulse-RB")
+  field(INPB, "$(SYS){$(D)-Out:FP1}Src:DBus-RB")
+  field(INPC, "$(SYS){$(D)-Out:FP1}Src:Scale-RB")
+  field(OUTA, "$(SYS){$(D)-Out:FP1}Src-RB PP")
+}
+
+record(stringin, "$(SYS){$(D)-Out:FP1}Src-RB") {}
+
+# Select which is displayed
+
+record(waveform, "$(SYS){$(D)-Out:FP1}Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+  alias("$(SYS){$(D)-Out:FP1}User-SP")
+}
+# Record set for an EVR's physical output
+#
+# Macros:
+#  ON = record name prefix
+#  OBJ = devObj name
+#  DESC = Physical label found on output jack
+
+
+record(bo, "$(SYS){$(D)-Out:FP2}Ena-SP") {
+  field(DTYP, "Obj Prop bool")
+  field(DESC, "Output TR1")
+  field(OUT , "@OBJ=$(EVR):OUT:TR1, PROP=Enable")
+  field(PINI, "YES")
+  field(ZNAM, "Disabled")
+  field(ONAM, "Enabled")
+  field(VAL , "1") # Default to enabled
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longout, "$(SYS){$(D)-Out:FP2}Src-SP") {
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "TR1")
+  field(OUT , "@OBJ=$(EVR):OUT:TR1, PROP=Map")
+  field(FLNK, "$(SYS){$(D)-Out:FP2}Src-FOut_")
+  field(PINI, "YES")
+  field(VAL , "63")
+  info(autosaveFields_pass0, "VAL HOPR LOPR DRVH DRVL")
+}
+
+# Settings
+# Users use will set one of these at a time.
+
+record(mbbo, "$(SYS){$(D)-Out:FP2}Src:Pulse-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP2}Src-SP PP")
+  field(ZRST, "Pulser 0")
+  field(ONST, "Pulser 1")
+  field(VAL , "2")
+  field(ZRVL, "2")
+  field(ONVL, "3")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(SYS){$(D)-Out:FP2}Src:DBus-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP2}Src-SP PP")
+  field(ZRST, "N/A")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(SYS){$(D)-Out:FP2}Src:Scale-SP") {
+  field(DTYP, "Raw Soft Channel")
+  field(OUT , "$(SYS){$(D)-Out:FP2}Src-SP PP")
+  field(ZRST, "Prescaler 0")
+  field(ZRVL, "1")
+  field(FVSV, "INVALID")
+  field(SXSV, "INVALID")
+  field(SVSV, "INVALID")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Mapping readback
+
+record(fanout, "$(SYS){$(D)-Out:FP2}Src-FOut_") {
+  field(ASG, "private")
+  field(LNK1, "$(SYS){$(D)-Out:FP2}Src-RB_")
+  field(LNK2, "$(SYS){$(D)-Out:FP2}Src:Pulse-RB")
+  field(LNK3, "$(SYS){$(D)-Out:FP2}Src:DBus-RB")
+  field(LNK4, "$(SYS){$(D)-Out:FP2}Src:Scale-RB")
+  field(LNK5, "$(SYS){$(D)-Out:FP2}Src-Calc_")
+}
+
+record(longin, "$(SYS){$(D)-Out:FP2}Src-RB_") {
+  field(ASG, "private")
+  field(DTYP, "Obj Prop uint32")
+  field(DESC, "TR1")
+  field(INP , "@OBJ=$(EVR):OUT:TR1, PROP=Map")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP2}Src:Pulse-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP2}Src-RB_")
+  field(ZRST, "Pulser 0")
+  field(ONST, "Pulser 1")
+  field(ZRVL, "2")
+  field(ONVL, "3")
+  field(UNSV, "MAJOR")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP2}Src:DBus-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP2}Src-RB_")
+  field(ZRST, "N/A")
+  field(ZRVL, "32")
+  field(EISV, "MAJOR")
+  field(NISV, "MAJOR")
+  field(TESV, "MAJOR")
+  field(ELSV, "MAJOR")
+  field(TVSV, "MAJOR")
+  field(TTSV, "MAJOR")
+  field(FTSV, "MAJOR")
+  field(FFSV, "MAJOR")
+  field(UNSV, "MAJOR")
+}
+
+record(mbbi, "$(SYS){$(D)-Out:FP2}Src:Scale-RB") {
+  field(DTYP, "Raw Soft Channel")
+  field(INP , "$(SYS){$(D)-Out:FP2}Src-RB_")
+  field(ZRST, "Prescaler 0")
+  field(ZRVL, "1")
+  field(FVSV, "MAJOR")
+  field(SXSV, "MAJOR")
+  field(SVSV, "MAJOR")
+  field(EISV, "MAJOR")
+  field(NISV, "MAJOR")
+  field(TESV, "MAJOR")
+  field(ELSV, "MAJOR")
+  field(TVSV, "MAJOR")
+  field(TTSV, "MAJOR")
+  field(FTSV, "MAJOR")
+  field(FFSV, "MAJOR")
+  field(UNSV, "MAJOR")
+  field(UNSV, "MAJOR")
+}
+
+record(aSub, "$(SYS){$(D)-Out:FP2}Src-Calc_") {
+  field(ASG, "private")
+  field(SNAM, "Select String")
+  field(FTA , "STRING")
+  field(FTB , "STRING")
+  field(FTC , "STRING")
+  field(FTVA, "STRING")
+  field(INPA, "$(SYS){$(D)-Out:FP2}Src:Pulse-RB")
+  field(INPB, "$(SYS){$(D)-Out:FP2}Src:DBus-RB")
+  field(INPC, "$(SYS){$(D)-Out:FP2}Src:Scale-RB")
+  field(OUTA, "$(SYS){$(D)-Out:FP2}Src-RB PP")
+}
+
+record(stringin, "$(SYS){$(D)-Out:FP2}Src-RB") {}
+
+# Select which is displayed
+
+record(waveform, "$(SYS){$(D)-Out:FP2}Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+  alias("$(SYS){$(D)-Out:FP2}User-SP")
+}
+# Record set for an EVR's programmable pulse generator
+#
+# Macros:
+#  PN = delaygen record name prefix
+#  P  = base record name prefix
+#  OBJ = devObj name
+#  PID = Pulse gen ID number (corresponds to output mappings)
+#  DMAX = Max delay setting
+#  WMAX = Max width setting
+#  PMAX = Max prescaler (divider) setting
+#  NOPS = 0 - enable prescaler, 1 - disable prescaler
+
+# When Disabled, the output of the Pulse Generator will remain in
+# its inactive state (normally low). The generator must be enabled
+# before mapped actions take effect.
+#
+record(bo, "$(SYS){$(D)-DlyGen:0}Ena-Sel") {
+  field(DTYP, "Obj Prop bool")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=Enable")
+  field(PINI, "YES")
+  field(VAL , "1")
+  field(MASK, "1")
+  field(ZNAM, "Disabled")
+  field(ONAM, "Enabled")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Pulser Soft set/reset
+record(bo, "$(SYS){$(D)-DlyGen:0}Set-Cmd") {
+  field(DESC, "Soft set")
+  field(DTYP, "Obj Prop command")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=SoftSet")
+}
+
+record(bo, "$(SYS){$(D)-DlyGen:0}Reset-Cmd") {
+  field(DESC, "Soft reset")
+  field(DTYP, "Obj Prop command")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=SoftReset")
+}
+
+# Reverses the output polarity. When set, changes the Pulse Generator's
+# output from normally low to normally high.
+#
+record(bo, "$(SYS){$(D)-DlyGen:0}Polarity-Sel") {
+  field(DTYP, "Obj Prop bool")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=Polarity")
+  field(PINI, "YES")
+  field(VAL , "0")
+  field(MASK, "1")
+  field(ZNAM, "Active High")
+  field(ONAM, "Active Low")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Determines the time between when the Pulse Generator is triggered
+# and when it changes state from inactive to active (normally low to high).
+record(ao, "$(SYS){$(D)-DlyGen:0}Delay-SP") {
+  field(DTYP, "Obj Prop double")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=Delay")
+  field(PINI, "YES")
+  field(DESC, "Pulse Generator 0")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}Delay-RB")
+  info(autosaveFields_pass0, "VAL EGU ESLO PREC HOPR LOPR DRVL DRVH")
+}
+
+record(ai, "$(SYS){$(D)-DlyGen:0}Delay-RB") {
+  field(DTYP, "Obj Prop double")
+  field(INP , "@OBJ=$(EVR):Pul0, PROP=Delay")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}Delay:Raw-RB")
+}
+
+record(longin, "$(SYS){$(D)-DlyGen:0}Delay:Raw-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul0, PROP=Delay")
+  field(EGU , "cnts")
+  field(HOPR, "0xffffffff")
+  field(LOPR, "0")
+  field(HIGH, "0xffffffff")
+  field(HSV, "MAJOR")
+}
+
+# Determines the time between when the Pulse Generator changes state from
+# inactive to active (normally low to high), and when it changes back to inactive.
+#
+record(ao, "$(SYS){$(D)-DlyGen:0}Width-SP") {
+  field(DTYP, "Obj Prop double")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=Width")
+  field(PINI, "YES")
+  field(DESC, "Pulser pulse width")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}Width-RB")
+  info(autosaveFields_pass0, "VAL EGU ESLO PREC HOPR LOPR DRVL DRVH")
+}
+
+record(ai, "$(SYS){$(D)-DlyGen:0}Width-RB") {
+  field(DTYP, "Obj Prop double")
+  field(INP , "@OBJ=$(EVR):Pul0, PROP=Width")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}Width:Raw-RB")
+}
+
+record(longin, "$(SYS){$(D)-DlyGen:0}Width:Raw-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul0, PROP=Width")
+  field(PINI, "YES")
+  field(HOPR, "0xffffffff")
+  field(LOPR, "0")
+  field(HIGH, "0xffffffff")
+  field(HSV, "MAJOR")
+}
+
+# Decreases the resolution of both delay and width by an integer multiple.
+#
+# Achieves greater range at the expense of resolution.
+#
+record(longout, "$(SYS){$(D)-DlyGen:0}Prescaler-SP") {
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=Prescaler")
+  field(DESC, "Pulser prescaler")
+  field(PINI, "YES")
+  field(HOPR, "0")
+  field(LOPR, "1")
+  field(DRVH, "0")
+  field(DRVL, "1")
+  field(VAL , "1")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}Prescaler-RB")
+  field(DISP, "1")
+  field(DISA, "1")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longin, "$(SYS){$(D)-DlyGen:0}Prescaler-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul0, PROP=Prescaler")
+  field(HOPR, "0")
+  field(LOPR, "1")
+  field(HIGH, "0")
+  field(HSV, "MAJOR")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}Res-I")
+}
+
+record(calc, "$(SYS){$(D)-DlyGen:0}Res-I") {
+  field(DESC, "Effective resolution")
+  field(INPA, "$(SYS){$(D)-DlyGen:0}Prescaler-RB MS")
+  field(INPB, "$(SYS){$(D)}Link:ClkPeriod-I CP")
+  field(CALC, "1e9*(A?A:1)*B")
+  field(EGU, "ns")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}Res-FO_")
+}
+
+record(fanout, "$(SYS){$(D)-DlyGen:0}Res-FO_") {
+  field(ASG, "private")
+  field(DESC, "Clock change resync")
+  field(LNK1, "$(SYS){$(D)-DlyGen:0}Delay-SP")
+  field(LNK2, "$(SYS){$(D)-DlyGen:0}Width-SP")
+}
+
+record(waveform, "$(SYS){$(D)-DlyGen:0}Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+}
+
+# Triger pulser generator by one or more prescalers
+record(mbboDirect, "$(SYS){$(D)-DlyGen:0}PSTrig-Sel")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=PSTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  field(VAL , "0")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}PSTrig-RB")
+  info(autosaveFields_pass0, "RVAL")
+}
+
+record(mbbiDirect, "$(SYS){$(D)-DlyGen:0}PSTrig-RB")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul0, PROP=PSTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  info(autosaveFields_pass0, "RVAL")
+}
+
+# Trigger pulser generator by one or more DBus bits
+record(mbboDirect, "$(SYS){$(D)-DlyGen:0}DBusTrig-Sel")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR):Pul0, PROP=DBusTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  field(VAL , "0")
+  field(FLNK, "$(SYS){$(D)-DlyGen:0}DBusTrig-RB")
+  info(autosaveFields_pass0, "RVAL")
+}
+
+record(mbbiDirect, "$(SYS){$(D)-DlyGen:0}DBusTrig-RB")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul0, PROP=DBusTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  info(autosaveFields_pass0, "RVAL")
+}
+# Record set for an EVR's programmable pulse generator
+#
+# Macros:
+#  PN = delaygen record name prefix
+#  P  = base record name prefix
+#  OBJ = devObj name
+#  PID = Pulse gen ID number (corresponds to output mappings)
+#  DMAX = Max delay setting
+#  WMAX = Max width setting
+#  PMAX = Max prescaler (divider) setting
+#  NOPS = 0 - enable prescaler, 1 - disable prescaler
+
+# When Disabled, the output of the Pulse Generator will remain in
+# its inactive state (normally low). The generator must be enabled
+# before mapped actions take effect.
+#
+record(bo, "$(SYS){$(D)-DlyGen:1}Ena-Sel") {
+  field(DTYP, "Obj Prop bool")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=Enable")
+  field(PINI, "YES")
+  field(VAL , "1")
+  field(MASK, "1")
+  field(ZNAM, "Disabled")
+  field(ONAM, "Enabled")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Pulser Soft set/reset
+record(bo, "$(SYS){$(D)-DlyGen:1}Set-Cmd") {
+  field(DESC, "Soft set")
+  field(DTYP, "Obj Prop command")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=SoftSet")
+}
+
+record(bo, "$(SYS){$(D)-DlyGen:1}Reset-Cmd") {
+  field(DESC, "Soft reset")
+  field(DTYP, "Obj Prop command")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=SoftReset")
+}
+
+# Reverses the output polarity. When set, changes the Pulse Generator's
+# output from normally low to normally high.
+#
+record(bo, "$(SYS){$(D)-DlyGen:1}Polarity-Sel") {
+  field(DTYP, "Obj Prop bool")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=Polarity")
+  field(PINI, "YES")
+  field(VAL , "0")
+  field(MASK, "1")
+  field(ZNAM, "Active High")
+  field(ONAM, "Active Low")
+  info(autosaveFields_pass0, "VAL")
+}
+
+# Determines the time between when the Pulse Generator is triggered
+# and when it changes state from inactive to active (normally low to high).
+record(ao, "$(SYS){$(D)-DlyGen:1}Delay-SP") {
+  field(DTYP, "Obj Prop double")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=Delay")
+  field(PINI, "YES")
+  field(DESC, "Pulse Generator 1")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}Delay-RB")
+  info(autosaveFields_pass0, "VAL EGU ESLO PREC HOPR LOPR DRVL DRVH")
+}
+
+record(ai, "$(SYS){$(D)-DlyGen:1}Delay-RB") {
+  field(DTYP, "Obj Prop double")
+  field(INP , "@OBJ=$(EVR):Pul1, PROP=Delay")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}Delay:Raw-RB")
+}
+
+record(longin, "$(SYS){$(D)-DlyGen:1}Delay:Raw-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul1, PROP=Delay")
+  field(EGU , "cnts")
+  field(HOPR, "0xffffffff")
+  field(LOPR, "0")
+  field(HIGH, "0xffffffff")
+  field(HSV, "MAJOR")
+}
+
+# Determines the time between when the Pulse Generator changes state from
+# inactive to active (normally low to high), and when it changes back to inactive.
+#
+record(ao, "$(SYS){$(D)-DlyGen:1}Width-SP") {
+  field(DTYP, "Obj Prop double")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=Width")
+  field(PINI, "YES")
+  field(DESC, "Pulser pulse width")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}Width-RB")
+  info(autosaveFields_pass0, "VAL EGU ESLO PREC HOPR LOPR DRVL DRVH")
+}
+
+record(ai, "$(SYS){$(D)-DlyGen:1}Width-RB") {
+  field(DTYP, "Obj Prop double")
+  field(INP , "@OBJ=$(EVR):Pul1, PROP=Width")
+  field(VAL , "0")
+  field(EGU , "us")
+  field(LINR, "LINEAR")
+  field(ESLO, "1e6")
+  field(PREC, "3")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}Width:Raw-RB")
+}
+
+record(longin, "$(SYS){$(D)-DlyGen:1}Width:Raw-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul1, PROP=Width")
+  field(PINI, "YES")
+  field(HOPR, "0xffffffff")
+  field(LOPR, "0")
+  field(HIGH, "0xffffffff")
+  field(HSV, "MAJOR")
+}
+
+# Decreases the resolution of both delay and width by an integer multiple.
+#
+# Achieves greater range at the expense of resolution.
+#
+record(longout, "$(SYS){$(D)-DlyGen:1}Prescaler-SP") {
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=Prescaler")
+  field(DESC, "Pulser prescaler")
+  field(PINI, "YES")
+  field(HOPR, "0")
+  field(LOPR, "1")
+  field(DRVH, "0")
+  field(DRVL, "1")
+  field(VAL , "1")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}Prescaler-RB")
+  field(DISP, "1")
+  field(DISA, "1")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(longin, "$(SYS){$(D)-DlyGen:1}Prescaler-RB") {
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul1, PROP=Prescaler")
+  field(HOPR, "0")
+  field(LOPR, "1")
+  field(HIGH, "0")
+  field(HSV, "MAJOR")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}Res-I")
+}
+
+record(calc, "$(SYS){$(D)-DlyGen:1}Res-I") {
+  field(DESC, "Effective resolution")
+  field(INPA, "$(SYS){$(D)-DlyGen:1}Prescaler-RB MS")
+  field(INPB, "$(SYS){$(D)}Link:ClkPeriod-I CP")
+  field(CALC, "1e9*(A?A:1)*B")
+  field(EGU, "ns")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}Res-FO_")
+}
+
+record(fanout, "$(SYS){$(D)-DlyGen:1}Res-FO_") {
+  field(ASG, "private")
+  field(DESC, "Clock change resync")
+  field(LNK1, "$(SYS){$(D)-DlyGen:1}Delay-SP")
+  field(LNK2, "$(SYS){$(D)-DlyGen:1}Width-SP")
+}
+
+record(waveform, "$(SYS){$(D)-DlyGen:1}Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+}
+
+# Triger pulser generator by one or more prescalers
+record(mbboDirect, "$(SYS){$(D)-DlyGen:1}PSTrig-Sel")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=PSTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  field(VAL , "0")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}PSTrig-RB")
+  info(autosaveFields_pass0, "RVAL")
+}
+
+record(mbbiDirect, "$(SYS){$(D)-DlyGen:1}PSTrig-RB")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul1, PROP=PSTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  info(autosaveFields_pass0, "RVAL")
+}
+
+# Trigger pulser generator by one or more DBus bits
+record(mbboDirect, "$(SYS){$(D)-DlyGen:1}DBusTrig-Sel")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(OUT , "@OBJ=$(EVR):Pul1, PROP=DBusTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  field(VAL , "0")
+  field(FLNK, "$(SYS){$(D)-DlyGen:1}DBusTrig-RB")
+  info(autosaveFields_pass0, "RVAL")
+}
+
+record(mbbiDirect, "$(SYS){$(D)-DlyGen:1}DBusTrig-RB")
+{
+  field(DTYP, "Obj Prop uint32")
+  field(INP , "@OBJ=$(EVR):Pul1, PROP=DBusTrig")
+  field(PINI, "YES")
+  field(NOBT, "8")
+  info(autosaveFields_pass0, "RVAL")
+}
+# Control for mapping a pulse geneator to an event code in hardware
+#
+# Macros:
+#  NAME = record name
+#  PID = Pulder ID #
+#  OBJ = EVR devObj name
+#  F = Pulse generator action
+#    Choices are: "Trig", "Set", "Reset"
+#  EVT = Initial event code
+#
+
+record(longout, "$(SYS){$(D)-DlyGen:0}Evt:Trig0-SP") {
+  field(DTYP, "EVR Pulser Mapping" )
+  field(OUT , "@OBJ=$(EVR):Pul0, Func=Trig")
+  field(PINI, "YES")
+  field(DESC, "Mapping for Pulser 0")
+  field(VAL , "0")
+  field(LOPR, "0")
+  field(HOPR, "255")
+  field(DRVL, "0")
+  field(DRVH, "255")
+  info(autosaveFields_pass0, "VAL")
+}
+# Control for mapping a pulse geneator to an event code in hardware
+#
+# Macros:
+#  NAME = record name
+#  PID = Pulder ID #
+#  OBJ = EVR devObj name
+#  F = Pulse generator action
+#    Choices are: "Trig", "Set", "Reset"
+#  EVT = Initial event code
+#
+
+record(longout, "$(SYS){$(D)-DlyGen:0}Evt:Trig1-SP") {
+  field(DTYP, "EVR Pulser Mapping" )
+  field(OUT , "@OBJ=$(EVR):Pul0, Func=Set")
+  field(PINI, "YES")
+  field(DESC, "Mapping for Pulser 0")
+  field(VAL , "0")
+  field(LOPR, "0")
+  field(HOPR, "255")
+  field(DRVL, "0")
+  field(DRVH, "255")
+  info(autosaveFields_pass0, "VAL")
+}
+# Control for mapping a pulse geneator to an event code in hardware
+#
+# Macros:
+#  NAME = record name
+#  PID = Pulder ID #
+#  OBJ = EVR devObj name
+#  F = Pulse generator action
+#    Choices are: "Trig", "Set", "Reset"
+#  EVT = Initial event code
+#
+
+record(longout, "$(SYS){$(D)-DlyGen:0}Evt:Trig2-SP") {
+  field(DTYP, "EVR Pulser Mapping" )
+  field(OUT , "@OBJ=$(EVR):Pul0, Func=Reset")
+  field(PINI, "YES")
+  field(DESC, "Mapping for Pulser 0")
+  field(VAL , "0")
+  field(LOPR, "0")
+  field(HOPR, "255")
+  field(DRVL, "0")
+  field(DRVH, "255")
+  info(autosaveFields_pass0, "VAL")
+}
+# Control for mapping a pulse geneator to an event code in hardware
+#
+# Macros:
+#  NAME = record name
+#  PID = Pulder ID #
+#  OBJ = EVR devObj name
+#  F = Pulse generator action
+#    Choices are: "Trig", "Set", "Reset"
+#  EVT = Initial event code
+#
+
+record(longout, "$(SYS){$(D)-DlyGen:1}Evt:Trig0-SP") {
+  field(DTYP, "EVR Pulser Mapping" )
+  field(OUT , "@OBJ=$(EVR):Pul1, Func=Trig")
+  field(PINI, "YES")
+  field(DESC, "Mapping for Pulser 1")
+  field(VAL , "0")
+  field(LOPR, "0")
+  field(HOPR, "255")
+  field(DRVL, "0")
+  field(DRVH, "255")
+  info(autosaveFields_pass0, "VAL")
+}
+# Control for mapping a pulse geneator to an event code in hardware
+#
+# Macros:
+#  NAME = record name
+#  PID = Pulder ID #
+#  OBJ = EVR devObj name
+#  F = Pulse generator action
+#    Choices are: "Trig", "Set", "Reset"
+#  EVT = Initial event code
+#
+
+record(longout, "$(SYS){$(D)-DlyGen:1}Evt:Trig1-SP") {
+  field(DTYP, "EVR Pulser Mapping" )
+  field(OUT , "@OBJ=$(EVR):Pul1, Func=Set")
+  field(PINI, "YES")
+  field(DESC, "Mapping for Pulser 1")
+  field(VAL , "0")
+  field(LOPR, "0")
+  field(HOPR, "255")
+  field(DRVL, "0")
+  field(DRVH, "255")
+  info(autosaveFields_pass0, "VAL")
+}
+# Control for mapping a pulse geneator to an event code in hardware
+#
+# Macros:
+#  NAME = record name
+#  PID = Pulder ID #
+#  OBJ = EVR devObj name
+#  F = Pulse generator action
+#    Choices are: "Trig", "Set", "Reset"
+#  EVT = Initial event code
+#
+
+record(longout, "$(SYS){$(D)-DlyGen:1}Evt:Trig2-SP") {
+  field(DTYP, "EVR Pulser Mapping" )
+  field(OUT , "@OBJ=$(EVR):Pul1, Func=Reset")
+  field(PINI, "YES")
+  field(DESC, "Mapping for Pulser 1")
+  field(VAL , "0")
+  field(LOPR, "0")
+  field(HOPR, "255")
+  field(DRVL, "0")
+  field(DRVH, "255")
+  info(autosaveFields_pass0, "VAL")
+}

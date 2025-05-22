@@ -1,0 +1,4 @@
+epicsEnvSet("IOC","__IOC_PREFIX__")
+epicsEnvSet("TOP","/home/nat/progetti/mrfioc-2.0")
+epicsEnvSet("DEVLIB2","/home/nat/progetti/epics-base/epics-modules/devlib2")
+epicsEnvSet("EPICS_BASE","/usr/local/epics")

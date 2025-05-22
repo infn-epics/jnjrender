@@ -1,0 +1,58 @@
+asset: https://servicedesk.infn.it/secure/ObjectSchema.jspa?id=44&typeId=2441&mode=object&objectId=113217
+autosync: false
+charturl: https://baltig.infn.it/epics-containers/ioc-launcher-chart.git
+devgroup: timing
+devices:
+  evg:
+  - bus: 9
+    func: 0
+    iocinit:
+    - name: EvtClk-Source-Sel
+      value: RF
+    - name: EvtClk-RFDiv-SP
+      value: '1'
+    - name: EvtClk-RFFreq-SP
+      value: '62.08'
+    - name: SoftSeq-1-TsInpMode-Sel
+      value: EGU
+    - name: SoftSeq-1-TsResolution-Sel
+      value: uSec
+    - name: SoftSeq-1-TrigSrc-Sel
+      value: Front0
+    - name: Mxc7-Prescaler-SP
+      value: 96
+    - name: AcTrig-SyncSrc-Sel
+      value: Mxc7
+    name: TMG
+    slot: 9
+devtype: mrf230
+exec: start.sh
+host: 10.16.4.23
+iocbin: ../../bin/linux-x86_64/elinp-gp09-ioc01
+iocdir: cosylabioc
+iocfunc: elinp_gp09_ioc01
+iocname: mrf-evg
+iocprefix: LEL:TIM
+name: mrf-evg
+nfsMounts:
+- mountPath: /nfs/data
+  name: data
+  opt: -o credentials=/etc/smbcredentials
+  path: /data_epik8s/eli/data
+  server: 192.168.197.157
+  type: cifs
+- mountPath: /nfs/autosave
+  name: autosave
+  opt: -o credentials=/etc/smbcredentials
+  path: /data_epik8s/eli/autosave
+  server: 192.168.197.157
+  type: cifs
+- mountPath: /nfs/config
+  name: config
+  opt: -o credentials=/etc/smbcredentials
+  path: /data_epik8s/eli/config
+  server: 192.168.197.157
+  type: cifs
+scpoptions: -O
+ssh_options: -o HostKeyAlgorithms=ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
+workdir: /opt/codac-4.1/apps/elinp-gp09-ioc01/iocBoot/epik8s

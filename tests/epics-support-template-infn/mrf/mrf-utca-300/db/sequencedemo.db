@@ -1,0 +1,11 @@
+
+record(seq, "$(P)demo$(s=:)reset") {
+  field(LNK1, "$(P)EvtACnt-I")
+  field(LNK2, "$(P)EvtBCnt-I")
+  field(LNK3, "$(P)EvtCCnt-I")
+  field(LNK4, "$(P)EvtDCnt-I")
+  field(LNK5, "$(P)EvtECnt-I")
+  field(LNK6, "$(P)EvtFCnt-I")
+  field(LNK7, "$(P)EvtGCnt-I")
+  field(LNK8, "$(P)EvtHCnt-I")
+}

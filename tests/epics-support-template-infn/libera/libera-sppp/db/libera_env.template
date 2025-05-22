@@ -1,0 +1,642 @@
+###############################################################################
+#                        General environment PVs
+###############################################################################
+# ENV monitor output is a single value.
+#
+
+record(longin, "$(DEVICE)ENV_KX_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 700)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_KX_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 700)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_KY_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 701)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_KY_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 701)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_X_OFFSET_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 702)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_X_OFFSET_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 702)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_Y_OFFSET_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 703)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_Y_OFFSET_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 703)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_Q_OFFSET_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 704)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_Q_OFFSET_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 704)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ILK_X_LOW_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 705)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_ILK_X_LOW_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 705)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ILK_X_HIGH_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 706)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_ILK_X_HIGH_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 706)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ILK_Y_LOW_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 707)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_ILK_Y_LOW_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 707)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ILK_Y_HIGH_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 708)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_ILK_Y_HIGH_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 708)")
+	field(PINI, "YES")
+}
+
+record(mbbiDirect, "$(DEVICE)ENV_ERROR_MONITOR") {
+	field(DTYP, "asynUInt32Digital")
+	field(SCAN, "I/O Intr")
+	field(INP, "@asynMask($(PORT), 711, 0x7, 1.0)")
+	field(FLNK, "$(DEVICE)ENV_SAFPGA_ERR_MONITOR")
+	field(NOBT, "3")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_FRONT_VENT_CONF_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 717)")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_FRONT_VENT_ACT_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 718)")
+	field(DESC, "Front")
+	field(EGU,  "RPM")
+	field(LOW,  "2000")
+	field(HIGH, "4500")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_BACK_VENT_CONF_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 719)")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_BACK_VENT_ACT_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 720)")
+	field(DESC, "Back")
+	field(EGU,  "RPM")
+	field(LOW,  "2000")
+	field(HIGH, "4500")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_TEMP_MAX_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 721)")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_TEMP_MIN_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 722)")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_TEMP_DIGITAL_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 723)")
+	field(DESC, "Digital PCB")
+	field(EGU,  "C")
+	field(LOW,  "0")
+	field(HIGH, "60")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_GAIN_MONITOR") {
+	field(SCAN, "1 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 724)")
+	field(DESC, "Level")
+	field(EGU,  "dB")
+	field(LOPR, "-80")
+	field(HOPR, "0")
+	field(LOW,  "-20")
+	field(HIGH, "1")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_GAIN_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT), 724)")
+	field(DESC, "Level")
+	field(LOPR, "-80")
+	field(HOPR, "0")
+	field(LOW,  "-20")
+	field(HIGH, "1")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(mbbi, "$(DEVICE)ENV_AGC_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 725, 1.0)")
+	field(ZRVL, "0")
+	field(ONVL, "1")
+	field(TWVL, "2")
+	field(THVL, "3")
+	field(FRVL, "4")
+	field(ZRST, "MANUAL")
+	field(ONST, "AUTO")
+	field(TWST, "AVERAGING")
+	field(THST, "COMPENSATING")
+	field(FRST, "AVE & COMP")
+	field(PINI, "YES")
+}
+
+record(mbbo, "$(DEVICE)ENV_AGC_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 725)")
+	field(ZRVL, "0")
+	field(ONVL, "1")
+	field(TWVL, "2")
+	field(THVL, "3")
+	field(FRVL, "4")
+	field(ZRST, "MANUAL")
+	field(ONST, "AUTO")
+	field(TWST, "AVERAGING")
+	field(THST, "COMPENSATING")
+	field(FRST, "AVE & COMP")
+	field(PINI, "YES")
+}
+
+record(mbbi, "$(DEVICE)ENV_ILK_MODE_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(ZRVL, "0")
+	field(ONVL, "1")
+	field(ZRST, "DISABLE")
+	field(ONST, "ENABLE")
+	field(INP, "@asyn($(PORT), 727)")
+	field(PINI, "YES")
+}
+
+record(mbbo, "$(DEVICE)ENV_ILK_MODE_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 727)")
+	field(ZRVL, "0")
+	field(ONVL, "1")
+	field(ZRST, "DISABLE")
+	field(ONST, "ENABLE")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ILK_OF_LIMIT_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 728)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_ILK_OF_LIMIT_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 728)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ILK_OF_DUR_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 729)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_ILK_OF_DUR_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 729)")
+	field(PINI, "YES")
+}
+
+record(bi, "$(DEVICE)ENV_INTERLOCK_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynUInt32Digital")
+	field(INP, "@asynMask($(PORT), 731, 0x1, 1.0)")
+	field(ZNAM, "NO INTERLOCK")
+	field(ONAM, "INTERLOCK")
+	field(PINI, "YES")
+}
+
+record(bo, "$(DEVICE)ENV_INTERLOCK_CLEAR_CMD") {
+	field(DTYP, "asynUInt32Digital")
+	field(OUT, "@asynMask($(PORT), 732, 0x1, 1.0)")
+}
+
+record(bo, "$(DEVICE)ENV_SET_INTERLOCK_PARAM_CMD") {
+	field(DESC, "Sets ILK parameters")
+	field(DTYP, "asynUInt32Digital")
+	field(OUT, "@asynMask($(PORT), 733, 0x1, 1.0)")
+}
+
+record(longin, "$(DEVICE)ENV_ILK_STATUS_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 735)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_ILK_STATUS_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 735)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_TRIGDELAY_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 739)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_TRIGDELAY_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 739)")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE0_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 760)")
+	field(DESC, "1.5 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "1.425")
+	field(HIGH, "1.575")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE1_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 761)")
+	field(DESC, "1.8 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "1.710")
+	field(HIGH, "1.890")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE2_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 762)")
+	field(DESC, "2.5 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "2.375")
+	field(HIGH, "2.625")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE3_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 763)")
+	field(DESC, "3.3 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "3.135")
+	field(HIGH, "3.465")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE4_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 764)")
+	field(DESC, "5.0 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "4.750")
+	field(HIGH, "5.250")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE5_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 765)")
+	field(DESC, "12.0 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "11.400")
+	field(HIGH, "12.600")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE6_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 766)")
+	field(DESC, "-12.0 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "-12.600")
+	field(HIGH, "-11.400")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_VOLTAGE7_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 767)")
+	field(DESC, "-5.0 V")
+	field(EGU,  "V")
+	field(ASLO, "0.001")
+	field(PREC, "3")
+	field(LOW,  "-5.250")
+	field(HIGH, "-4.750")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(bi, "$(DEVICE)ENV_SAFPGA_ERR_MONITOR") {
+	field(FLNK, "$(DEVICE)ENV_SADRV_ERR_MONITOR")
+	field(INP, "$(DEVICE)ENV_ERROR_MONITOR.B1")
+	field(OSV, "MAJOR")
+	field(ZNAM, "NO ERROR")
+	field(ONAM, "ERROR")
+}
+
+record(bi, "$(DEVICE)ENV_SADRV_ERR_MONITOR") {
+	field(INP, "$(DEVICE)ENV_ERROR_MONITOR.B2")
+	field(OSV, "MAJOR")
+	field(ZNAM, "NO ERROR")
+	field(ONAM, "ERROR")
+}
+
+###############################################################################
+#                     ADC single pass environment PVs
+###############################################################################
+
+record(longin, "$(DEVICE)ENV_ADCSP_THRESHOLD_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 781)")
+	field(PINI, "YES")
+}
+record(longout, "$(DEVICE)ENV_ADCSP_THRESHOLD_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 781)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ADCSP_NBEFORE_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 782)")
+	field(PINI, "YES")
+}
+record(longout, "$(DEVICE)ENV_ADCSP_NBEFORE_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 782)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_ADCSP_NAFTER_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 783)")
+	field(PINI, "YES")
+}
+record(longout, "$(DEVICE)ENV_ADCSP_NAFTER_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 783)")
+	field(PINI, "YES")
+}
+
+###############################################################################
+#                             MAX ADC
+###############################################################################
+
+record(longin, "$(DEVICE)ENV_MAX_ADC_MONITOR") {
+	field(SCAN, "1 second")
+	field(DTYP, "asynInt32")
+	field(INP,  "@asyn($(PORT), 796)")
+	field(DESC, "Max ADC")
+	field(LOW,  "0")
+	field(HIGH, "32000")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+###############################################################################
+#                             SPPP stuff
+###############################################################################
+
+record(longin, "$(DEVICE)ENV_KA_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 810)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_KA_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 810)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_KB_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 811)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_KB_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 811)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_KC_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 812)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_KC_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 812)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_KD_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 813)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_KD_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 813)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_KSUM_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 814)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_KSUM_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 814)")
+	field(PINI, "YES")
+}
+
+record(longin, "$(DEVICE)ENV_SUM_OFFSET_MONITOR") {
+	field(SCAN, "I/O Intr")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 815)")
+	field(PINI, "YES")
+}
+
+record(longout, "$(DEVICE)ENV_SUM_OFFSET_SP") {
+	field(DTYP, "asynInt32")
+	field(OUT, "@asyn($(PORT), 815)")
+	field(PINI, "YES")
+}
+
+record(bo, "$(DEVICE)ENV_RESET_COUNTER_CMD") {
+	field(DESC, "Clears sample counter")
+	field(DTYP, "asynUInt32Digital")
+	field(OUT, "@asynMask($(PORT), 816, 0x1, 1.0)")
+}
+
+record(ai, "$(DEVICE)ENV_TEMP_ANALOG_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 817)")
+	field(DESC, "Analog PCB")
+	field(EGU,  "C")
+	field(LOW,  "0")
+	field(HIGH, "60")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+
+record(ai, "$(DEVICE)ENV_TEMP_REMOTE_MONITOR") {
+	field(SCAN, "10 second")
+	field(DTYP, "asynInt32")
+	field(INP, "@asyn($(PORT), 818)")
+	field(DESC, "Remote")
+	field(EGU,  "C")
+	field(LOW,  "0")
+	field(HIGH, "60")
+	field(HSV,  "MAJOR")
+	field(PINI, "YES")
+}
+

@@ -1,0 +1,6 @@
+#!/bin/bash
+mount -o remount ,rw /
+/etc/init.d/ntp stop
+ntpdate ntp1.lnf.infn.it
+/etc/init.d/ntp start
+./st.cmd

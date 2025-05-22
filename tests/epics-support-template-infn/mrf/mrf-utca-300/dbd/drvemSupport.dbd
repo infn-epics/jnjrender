@@ -1,0 +1,15 @@
+registrar(mrmsetupreg)
+driver(drvEvrMrm)
+include evrSupport.dbd
+include mrfCommon.dbd
+
+device(waveform, INST_IO, devwaveformindataBufRx, "MRM EVR Buf Rx")
+
+# RTEMS only workaround for VME interrupt timing problem
+registrar(registerISRHack)
+
+variable(mrmEvrFIFOPeriod,double)
+
+variable(evrMrmSeqRxDebug, int)
+variable(evrMrmTimeDebug, int)
+variable(evrMrmTimeNSOverflowThreshold, int)

@@ -1,0 +1,27 @@
+# Environment port database
+file "libera_env.template" {
+pattern
+{PORT, DEVICE}
+{ENV, {{iocprefix}}:ENV:}
+}
+
+# Fast Application port database reading/writing 8192 samples
+file "libera_fa.template" {
+pattern
+{PORT, DEVICE}
+{FA, {{iocprefix}}:FA:}
+}
+
+# ADC port database reading 1024 samples max
+file "libera_adc.template" {
+pattern
+{PORT, DEVICE, NELM}
+{ADC, {{iocprefix}}:ADC:, 1024}
+}
+
+# Slow Acquisition port database
+file "libera_sa.template" {
+pattern
+{PORT, DEVICE}
+{SA, {{iocprefix}}:SA:}
+}

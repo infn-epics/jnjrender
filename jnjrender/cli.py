@@ -23,7 +23,11 @@ def render_jinja_to_yaml(jinja_file, variables, template_name, yaml_file,output_
                 print(f"Error: Template '{template_name}' not found in directory '{jinja_file}' or its subdirectories.")
                 return 2  # Error code 2: Template not found in directory
         else:
-            print(f"Error: 'template' key not found in YAML file. Cannot determine template file from directory '{jinja_file}'.")
+            if 'template' in variables:
+                print(f"Error: cannot find a valid template in '{jinja_file}', but 'template' keys is found, try 'auto' option to look for '{variables['template']}'.")
+
+            else:
+                print(f"Error: 'template' key not found in YAML file. Cannot determine template file from directory '{jinja_file}'.")
             return 3  # Error code 3: 'template' key missing in YAML file
 
     try:

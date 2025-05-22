@@ -1,0 +1,135 @@
+#!/opt/libera-ioc/bin/liberaIOC
+
+# -------------------------------- HEADER -------------------------------------
+
+## You may have to change liberaIOC to something else
+## everywhere it appears in this file
+
+epicsEnvSet("ARCH","linux-x86")
+epicsEnvSet("TOP","{{ioctop}}")
+epicsEnvSet("ASYN","/opt/epics/asyn")
+epicsEnvSet("EPICS_BASE","/opt/epics/base")
+
+cd ${TOP}
+
+epicsEnvSet("IOCNAME","{{iocprefix}}")
+
+## Register all support components
+dbLoadDatabase("dbd/liberaIOC.dbd")
+liberaIOC_registerRecordDeviceDriver(pdbbase)
+
+## Asyn traces
+# Turn on global trace
+#asynSetTraceMask("", 0, 255)
+# Turn off global trace
+asynSetTraceMask("", 0, 0)# ------------------------ LLRF SPECIFIC ---------------------------------------
+
+epicsEnvSet("MCIAPP","libera-llrf")
+
+## Load record instances
+# Libera MCI tree support
+
+
+dbLoadRecords("db/llrf.db",        "P={{iocprefix}},D=${MCIAPP}")
+
+dbLoadRecords("db/vm.db",          "P={{iocprefix}},D=${MCIAPP},MB=vm1,B=vm")
+dbLoadRecords("db/tcm.db",         "P={{iocprefix}},D=${MCIAPP},MB=tcm2,B=tcm")
+dbLoadRecords("db/application.db", "P={{iocprefix}},D=${MCIAPP},MB=application,B=app")
+
+{%- for dev in devices %}
+{%- set prefix = iocprefix %}
+{% if dev.prefix is defined %}
+{%- set prefix = dev.prefix %}
+{%- endif %}
+## device TYPE {{dev.devtype}} ### 
+## {{dev.name}} ##
+dbLoadRecords("db/adllr.db",      "P={{prefix}},D=${MCIAPP},MB=adllr{{dev.channel}},B={{dev.name}}")
+{%- endfor %}
+
+## Asyn record for Libera asyn driver
+dbLoadRecords("/opt/epics/asyn/db/asynRecord.db","P={{iocprefix}}:,R=${MCIAPP}:asyn,PORT=${MCIAPP},ADDR=0,IMAX=100,OMAX=100")
+
+## Configure Libera port driver
+# Several Libera base based application can be accessed by specifying Asyn
+# port as the application name - see MCI app-name node that each Libera base
+# application provides.
+
+# initLibera() arguments:
+#   a_portName  - the name to give to this asyn port driver
+
+initLibera("${MCIAPP}")
+
+# Turn on port traces
+#asynSetTraceMask("${MCIAPP}", 0, 0xff)
+#asynSetTraceIOMask("${MCIAPP}", 0, 0xff)
+
+# Turn off port traces
+# asynSetTraceMask("${MCIAPP}", 0, 0)
+# asynSetTraceIOMask("${MCIAPP}", 0, 0)
+
+# ------------------------ PLATFORM SPECIFIC ----------------------------------
+
+## Load record instances
+# Libera MCI tree support
+dbLoadRecords("db/static.db",              "P={{iocprefix}},D=libera-platform")
+dbLoadRecords("db/platform.db",            "P={{iocprefix}},D=libera-platform")
+
+dbLoadRecords("db/os_sensors.db",          "P={{iocprefix}},D=libera-platform,MB=os,B=os")
+dbLoadRecords("db/icb_sensors.db",         "P={{iocprefix}},D=libera-platform,MB=icb0,B=icb")
+dbLoadRecords("db/vm1_rf2_sensors.db",     "P={{iocprefix}},D=libera-platform,MB=vm1,B=vm")
+dbLoadRecords("db/tcm1_cdm_sensors.db",    "P={{iocprefix}},D=libera-platform,MB=tcm2,B=tcm")
+
+{%- for dev in devices %}
+{%- set prefix = iocprefix %}
+{% if dev.prefix is defined %}
+{%- set prefix = dev.prefix %}
+{%- endif %}
+## device TYPE {{dev.devtype}} ### 
+## {{dev.name}} ##
+dbLoadRecords("db/adc_llrf_ft_sensors.db", "P={{prefix}},D=libera-platform,MB=adllr{{dev.channel}},B={{dev.name}}")
+{%- endfor %}
+
+## Asyn record for Libera asyn driver
+dbLoadRecords("/opt/epics/asyn/db/asynRecord.db","P={{iocprefix}}:,R=libera-platform:asyn,PORT=libera-platform,ADDR=0,IMAX=100,OMAX=100")
+
+## Configure Libera port driver
+# Several Libera base based application can be accessed by specifying Asyn
+# port as the application name - see MCI app-name node that each Libera base
+# application provides.
+
+# initLibera() arguments:
+#   a_portName  - the name to give to this asyn port driver
+
+initLibera("libera-platform")
+
+# Turn on port traces
+#asynSetTraceMask("libera-platform", 0, 0xff)
+#asynSetTraceIOMask("libera-platform", 0, 0xff)
+
+# Turn off port traces
+#asynSetTraceMask("libera-platform", 0, 0)
+#asynSetTraceIOMask("libera-platform", 0, 0)
+
+# -------------------------------- FOOTER -------------------------------------
+
+iocInit()
+{%- for dev in devices %}
+{%- set prefix = iocprefix %}
+{% if dev.prefix is defined %}
+{%- set prefix = dev.prefix %}
+{%- endif %}
+
+{%- if dev.iocinit is sequence %}
+###### initializations {{dev.name}}
+{%- for param in dev.iocinit %}
+dbpf ("{{prefix}}:{{dev.name}}:{{param.name}}","{{param.value}}")
+{%- endfor %}
+######
+{%- endif %}
+{%- endfor %}
+dbl
+# Save list of PVs to a file
+dbl("*") > {{config_dir}}/pvlist.txt
+# end Save
+
+

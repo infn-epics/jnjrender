@@ -1,0 +1,289 @@
+record(mbbo, "$(P)Src-Sel") {
+  field(DESC, "EVG DBUS Source")
+  field(PINI, "YES")
+  field(VAL,  "0")
+  field(ZRST, "Off")
+  field(ONST, "Front0")
+  field(TWST, "Front1")
+  field(THST, "Univ0")
+  field(FRST, "Univ1")
+  field(FVST, "Univ2")
+  field(SXST, "Univ3")
+  field(SVST, "Univ4")
+  field(EIST, "Univ5")
+  field(NIST, "Univ6")
+  field(TEST, "Univ7")
+  field(ELST, "Univ8")
+  field(TVST, "Univ9")
+  field(TTST, "Univ10")
+  field(FTST, "Mxc $(dbusBit)")
+  field(FFST, "Up EVG")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "2")
+  field(THVL, "4")
+  field(FRVL, "8")
+  field(FVVL, "16")
+  field(SXVL, "32")
+  field(SVVL, "64")
+  field(EIVL, "128")
+  field(NIVL, "256")
+  field(TEVL, "512")
+  field(ELVL, "1024")
+  field(TVVL, "2048")
+  field(TTVL, "4096")
+  field(FTVL, "8192")
+  field(FFVL, "16384")
+
+  field(IVOA, "Don't drive outputs")
+  field(OUT, "$(P)MapConv-Sel_ PP")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(P)MapConv-Sel_") {
+  field(ASG, "private")
+  field(DTYP, "Raw Soft Channel")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "1")
+  field(THVL, "1")
+  field(FRVL, "1")
+  field(FVVL, "1")
+  field(SXVL, "1")
+  field(SVVL, "1")
+  field(EIVL, "1")
+  field(NIVL, "1")
+  field(TEVL, "1")
+  field(ELVL, "1")
+  field(TVVL, "1")
+  field(TTVL, "1")
+  field(FTVL, "2")
+  field(FFVL, "3")
+
+  field(IVOA, "Don't drive outputs")
+  field(OUT, "$(P)Map-Sel PP")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(mbbo, "$(P)Map-Sel") {
+  field(DTYP, "Obj Prop uint16")
+  field(OUT , "@OBJ=$(OBJ), PROP=Source")
+  field(PINI, "YES")
+  field(VAL,  "0")
+  field(UDF,  "0")
+  field(ZRST, "Off")
+  field(ONST, "ExtInp")
+  field(TWST, "Mxc$(dbusBit)")
+  field(THST, "Up EVG")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "2")
+  field(THVL, "3")
+  field(FRSV, "INVALID")
+  field(FVSV, "INVALID")
+  field(SXSV, "INVALID")
+  field(SVSV, "INVALID")
+  field(EISV, "INVALID")
+  field(NISV, "INVALID")
+  field(TESV, "INVALID")
+  field(ELSV, "INVALID")
+  field(TVSV, "INVALID")
+  field(TTSV, "INVALID")
+  field(FTSV, "INVALID")
+  field(FFSV, "INVALID")
+  field(UNSV, "INVALID")
+  field(IVOA, "Don't drive outputs")
+  info(autosaveFields_pass0, "VAL")
+}
+
+#
+# If the selected source is an external input then when we need to map that
+# Input to the Distributed Bus
+#
+record(mbbiDirect, "$(P)Src-MbbiDir_") {
+  field(ASG, "private")
+  field(DESC, "EVG Trig Evt Trig")
+  field(INP,  "$(P)Src-Sel.RVAL CP")
+}
+
+record(bo, "$(P)Src$(s=:)FrontInp0-Sel") {
+  field(DESC, "Front Input0 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):FrontInp0")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B0 CP")
+}
+
+record(bo, "$(P)Src$(s=:)FrontInp1-Sel") {
+  field(DESC, "Front Input1 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):FrontInp1")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B1 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp0-Sel") {
+  field(DESC, "Front Univ Input0 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp0")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B2 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp1-Sel") {
+  field(DESC, "Front Univ Input1 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp1")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B3 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp2-Sel") {
+  field(DESC, "Front Univ Input2 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp2")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B4 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp3-Sel") {
+  field(DESC, "Front Univ Input3 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp3")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B5 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp4-Sel") {
+  field(DESC, "Front Univ Input4 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp4")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B6 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp5-Sel") {
+  field(DESC, "Front Univ Input5 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp5")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B7 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp6-Sel") {
+  field(DESC, "Front Univ Input6 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp6")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B8 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp7-Sel") {
+  field(DESC, "Front Univ Input7 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp7")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.B9 CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp8-Sel") {
+  field(DESC, "Front Univ Input8 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp8")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.BA CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp9-Sel") {
+  field(DESC, "Front Univ Input9 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp9")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.BB CP")
+}
+
+record(bo, "$(P)Src$(s=:)UnivInp10-Sel") {
+  field(DESC, "Front Univ Input10 on Dbus")
+  field(DTYP, "EVG Dbus")
+  field(OUT , "#C0 S$(dbusBit) @$(EVG):UnivInp10")
+  field(ZNAM, "Clear")
+  field(ONAM, "Set")
+  field(OMSL, "closed_loop")
+  field(DOL,  "$(P)Src-MbbiDir_.BC CP")
+}
+
+#
+# By default OMSL field for the *Src* records is "closed_loop" hence
+# only one Source can be selected due of MBBO record. If you want to select
+# multiple sources then the OMSL field for the *Src* records should be
+# "supervisory" mode.
+#
+record(dfanout, "$(P)Omsl-FOut") {
+  field(PINI, "YES")
+  field(VAL,  "1")
+  field(UDF,  "0")
+  field(OMSL, "supervisory")
+  field(OUTA, "$(P)Omsl0-FOut_ PP")
+  field(OUTB, "$(P)Omsl1-FOut_ PP")
+  info(autosaveFields_pass0, "VAL")
+}
+
+record(dfanout, "$(P)Omsl0-FOut_") {
+  field(ASG, "private")
+  #field(PINI, "YES")
+  field(VAL,  "1")
+  field(UDF,  "0")
+  field(OMSL, "supervisory")
+  field(OUTA, "$(P)Src$(s=:)FrontInp0-Sel.OMSL")
+  field(OUTB, "$(P)Src$(s=:)FrontInp1-Sel.OMSL")
+  field(OUTC, "$(P)Src$(s=:)UnivInp0-Sel.OMSL")
+  field(OUTD, "$(P)Src$(s=:)UnivInp1-Sel.OMSL")
+  field(OUTE, "$(P)Src$(s=:)UnivInp2-Sel.OMSL")
+  field(OUTF, "$(P)Src$(s=:)UnivInp3-Sel.OMSL")
+  field(OUTG, "$(P)Src$(s=:)UnivInp4-Sel.OMSL")
+  field(OUTH, "$(P)Src$(s=:)UnivInp5-Sel.OMSL")
+}
+
+record(dfanout, "$(P)Omsl1-FOut_") {
+  field(ASG, "private")
+  #field(PINI, "YES")
+  field(VAL,  "1")
+  field(UDF,  "0")
+  field(OMSL, "supervisory")
+  field(OUTA, "$(P)Src$(s=:)UnivInp6-Sel.OMSL")
+  field(OUTB, "$(P)Src$(s=:)UnivInp7-Sel.OMSL")
+  field(OUTC, "$(P)Src$(s=:)UnivInp8-Sel.OMSL")
+  field(OUTD, "$(P)Src$(s=:)UnivInp9-Sel.OMSL")
+  field(OUTE, "$(P)Src$(s=:)UnivInp10-Sel.OMSL")
+}
+
+record(waveform, "$(P)Label-I") {
+  field(DESC, "Label")
+  field(FTVL, "CHAR")
+  field(NELM, "128")
+  info(autosaveFields_pass1, "VAL")
+}
