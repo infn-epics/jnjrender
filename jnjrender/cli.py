@@ -133,7 +133,7 @@ def main():
                 print(f"Error: Template directory '{template_dir}' not found under '{args.jinja_file}'")
                 exit(7)  # Error code 7: Template directory not found
 
-        print(f"* Copying and rendering contents of '{source_dir}' to '{args.output}'")
+        # print(f"* Copying and rendering contents of '{source_dir}' to '{args.output}'")
         for root, dirs, files in os.walk(source_dir):
             rel_path = os.path.relpath(root, source_dir)
             dest_root = os.path.join(args.output, rel_path) if rel_path != "." else args.output
@@ -148,7 +148,7 @@ def main():
             for file in files:
                 if file.endswith(".j2"):
                     jinja_file_path = os.path.join(root, file)
-                    output_file_path = os.path.join(root, file.replace(".j2", ".yaml"))
+                    output_file_path = os.path.join(root, file.replace(".j2", ""))
                     exit_code = render_jinja_to_yaml(jinja_file_path, variables,template_name, args.yaml_file, output_file_path)
                     if exit_code != 0:
                         exit(exit_code)
