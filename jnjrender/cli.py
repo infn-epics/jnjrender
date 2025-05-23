@@ -54,7 +54,8 @@ def render_jinja_to_yaml(jinja_file, variables, template_name, yaml_file,output_
         try:
             # Get the file permissions of the Jinja file
             jinja_permissions = os.stat(jinja_file).st_mode
-
+            if os.isdir(output_file):
+                output_file = os.path.join(output_file, os.path.basename(jinja_file).replace(".j2", ""))
             # Write the rendered content to the output file
             with open(output_file, 'w') as file:
                 file.write(rendered_content)
