@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "program": "jnjrender/cli.py",
             "console": "integratedTerminal",
-            "args":["tests/icpdas.j2","tests/icpdas.j2.init.yaml","--output","tests/refs/icpdas.yaml"],
+            "args":["tests/icpdas.j2","tests/instance/icpdas.j2.init.yaml","--output","tests/refs/icpdas.yaml"],
             "justMyCode": true,
             "env": {
                 
@@ -25,7 +25,7 @@
             "cwd": "${workspaceFolder}",
             "program": "jnjrender/cli.py",
             "console": "integratedTerminal",
-            "args":["tests/ibek-templates","tests/agilent-ioc.init.yaml","--auto","--output","tests/refs"],
+            "args":["tests/ibek-templates","tests/instance/agilent-ioc.init.yaml","--auto","--output","tests/refs"],
             "justMyCode": true,
             "env": {
                 
@@ -38,7 +38,20 @@
             "cwd": "${workspaceFolder}",
             "program": "jnjrender/cli.py",
             "console": "integratedTerminal",
-            "args":["tests/epics-support-template-infn","tests/icpdas.j2.init.yaml","--auto","--output","/tmp/tests"],
+            "args":["tests/epics-support-template-infn","tests/instance/icpdas.j2.init.yaml","--auto","--output","/tmp/tests"],
+            "justMyCode": true,
+            "env": {
+                
+            }
+        },
+        {
+            "name": "Python: jnjrender libera-spe",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "jnjrender/cli.py",
+            "console": "integratedTerminal",
+            "args":["tests/epics-support-template-infn","tests/instance/libera-spe-test.yaml","--auto","--output","/tmp/tests"],
             "justMyCode": true,
             "env": {
                 

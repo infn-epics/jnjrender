@@ -1,0 +1,102 @@
+config_dir: /epics/ioc/config
+data_dir: /data/
+autosave_dir: "/autosave"
+ioctop: /epics/ioc/config
+server: icpdasrtd01.simulator-euaps.svc
+affinityKey: kubernetes.io/hostname
+affinityValue: ""
+asset: https://confluence.infn.it/x/nYD8DQ
+autosaveClaim: null
+autosync: false
+beamline: euaps
+ca_server_port: 5064
+carepeater: null
+charturl: https://baltig.infn.it/epics-containers/ioc-chart.git
+dataVolume:
+  accessMode: ReadWriteOnce
+  hostPath: /data/
+  pvc: false
+  size: 1Gi
+devgroup: temp
+devtype: icp7215
+epicsConfiguration:
+  gateway: null
+  name: epics-configuration
+gitRepoConfig:
+  branch: devel
+  path: config/iocs/icpdas
+  size: 1Gi
+  token: 6r-MzeKyVxfVnhPAxtpP
+  url: https://baltig.infn.it/lnf-da-control/epik8s-euaps.git
+gitinit: true
+globalenv:
+- name: K8S_IOC_TFTP_ADDR
+  value: 172.23.168.220
+- name: K8S_IOC_TFTP_PORT
+  value: "69"
+- name: K8S_IOC_NFS_MOUNT
+  value: 172.23.168.220:iocs
+hostNetwork: false
+http_proxy: null
+https_proxy: null
+image: baltig.infn.it:4567/epics-containers/infn-epics-ioc:latest
+imagePullPolicy: Always
+ioc_version: 1
+iocConfig: /epics/ioc/config
+iocFolder: /epics/ioc
+template: mrf-utca-300
+iocname: tempsim01
+iocparam:
+- name: server
+  value: icpdasrtd01.simulator-euaps.svc
+iocprefix: TST
+iocroot: ICP01
+liveness: null
+name: tempsim01
+networks: null
+nfsMounts: null
+no_proxy: null
+opi:
+  macro:
+  - name: P
+    value: TST
+  - name: R
+    value: ICP01
+  main: icp7215.bob
+  url: https://baltig.infn.it/infn-epics/icpdas-opi.git
+opisClaim: null
+pva_server_port: 5075
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+runtimeClaim: null
+securityContext:
+  runAsGroup: 1000
+  runAsUser: 1000
+serial:
+  baud: 9600
+  ip: null
+  port: null
+  ptty: /var/tmp/ttyV0
+serviceAccount:
+  annotations: {}
+  create: false
+  name: default
+serviceAccountName: default
+start: /epics/ioc/start.sh
+staticIP: 10.104.5.175
+stop: /epics/ioc/stop.sh
+temp:
+- aslo: 0.0183112
+  desc: Sensor Temp
+  high: 80
+  hihi: 90
+  idx: 0
+  lolo: 5
+  low: 10
+  name: TEMP0
+useAffinity: false

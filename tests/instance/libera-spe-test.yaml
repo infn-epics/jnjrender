@@ -1,0 +1,23 @@
+name: "bdsparcplxbpm007"
+asset: "https://confluence.infn.it/x/doKBBg"
+charturl: 'https://baltig.infn.it/epics-containers/ioc-launcher-chart.git'
+template: "libera-spe"
+devtype: bpm
+devgroup: diag
+iocprefix: "PLXSPE"
+pva: false
+devices:
+  - name: "PLXBPM07"
+    channel: 3
+  - name: "PLXBPM08"
+    channel: 4
+  - name: "PLXBPM09"
+    channel: 5
+  - name: "PLXBPM10"
+    channel: 6  
+host: "bdsparcplxbpm007.lnf.infn.it"
+ssh_options: "-o PubkeyAcceptedKeyTypes=+ssh-rsa"
+workdir: "/opt/sparc"
+scpoptions: "-O"
+exec: "start.sh"
+autosync: false ## restart automatically on changes

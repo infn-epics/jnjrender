@@ -92,6 +92,12 @@ def main():
     if not args.yaml_file:
         print("Error: The 'yaml file' argument is required.")
         exit(1)
+    else:
+        # check if directory or file otherwise exit
+        if not(os.path.isdir(args.yaml_file) or os.path.isfile(args.yaml_file)):
+            print(f"Error: YAML file '{args.yaml_file}' is neither a file nor a directory.")
+            exit(1)
+        
     try:
         # Load YAML variables
         with open(args.yaml_file) as file:
@@ -107,7 +113,11 @@ def main():
     if args.auto and 'template' in variables:
         template_name = f"{variables['template']}.yaml.j2"
         template_dir= variables['template']
-        
+    if args.output:
+        # check if directory or file otherwise exit
+        if not(os.path.isdir(args.output) or os.path.isfile(args.output)):
+            print(f"Error: Output '{args.output}' is neither a file nor a directory.")
+            exit(1)
     # If both are directories, copy contents then render in the destination
     if os.path.isdir(args.jinja_file) and os.path.isdir(args.output):
         # If template_dir is set, find its full path under args.jinja_file
