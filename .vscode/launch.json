@@ -32,6 +32,19 @@
             }
         },
         {
+            "name": "Python: jnjrender test name and directory different ibek-template",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "jnjrender/cli.py",
+            "console": "integratedTerminal",
+            "args":["tests/ibek-templates","tests/instance/cooling-smc-test.yaml","--auto","--output","tests/refs"],
+            "justMyCode": true,
+            "env": {
+                
+            }
+        },
+        {
             "name": "Python: jnjrender test Directory",
             "type": "python",
             "request": "launch",

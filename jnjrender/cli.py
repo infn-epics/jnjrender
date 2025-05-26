@@ -122,12 +122,12 @@ def main():
         if template_dir:
             found = False
             for root, dirs, files in os.walk(args.jinja_file):
-                if os.path.basename(root) == template_dir:
+                if (os.path.basename(root) == template_dir) or (template_name in files):
                     source_dir = root
                     found = True
                     break
             if not found:
-                print(f"Error: Template directory '{template_dir}' not found under '{args.jinja_file}'")
+                print(f"Error: Template directory neither '{template_dir}' nor '{template_name}' found under '{args.jinja_file}'")
                 exit(7)  # Error code 7: Template directory not found
 
         # print(f"* Copying and rendering contents of '{source_dir}' to '{args.output}'")
