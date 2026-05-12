@@ -136,6 +136,9 @@ def main():
             dest_root = os.path.join(args.output, rel_path) if rel_path != "." else args.output
             os.makedirs(dest_root, exist_ok=True)
             for file in files:
+                # When a specific template is known, skip .j2 files that don't match it
+                if template_name and file.endswith(".j2") and file != template_name:
+                    continue
                 src_file = os.path.join(root, file)
                 dest_file = os.path.join(dest_root, file)
                 if not os.path.exists(dest_file):
