@@ -1,74 +1,99 @@
 # jnjrender
 
-**jnjrender** is a Python command-line application designed to render [Jinja2](https://jinja.palletsprojects.com/) templates into YAML files using variables from a specified YAML file. It allows for flexible templating by combining the power of Jinja2 and YAML, making it easy to create complex YAML configurations with dynamic content.
+[![Tests](https://github.com/infn-epics/jnjrender/actions/workflows/test.yml/badge.svg)](https://github.com/infn-epics/jnjrender/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/jnjrender)](https://pypi.org/project/jnjrender/)
+
+**jnjrender** is a Python CLI tool that renders [Jinja2](https://jinja.palletsprojects.com/) templates using variables from a YAML file. It is designed for generating EPICS IOC configuration files and other structured YAML-based configs from template libraries.
 
 ## Features
 
-- Render Jinja2 templates with values from a YAML file.
-- Automatically detect the correct Jinja2 template file when a directory is provided, based on the `template` key in the YAML file.
-- Output rendered content to the console or save it to a file.
-- Preserve file permissions of the Jinja2 template when saving the rendered output.
-- Simple command-line interface for ease of use.
+- Render a single `.j2` template file with variables from a YAML file.
+- **Auto mode (`--auto`)**: given a template library directory and an output directory, automatically select and render only the template whose name matches the `template` key in the YAML file — no unrelated templates are touched.
+- **Named template mode (`--template`)**: explicitly select a template by name from a directory.
+- Render all `.j2` files in a directory when no specific template is specified.
+- Render `.j2` files in-place inside a destination directory (useful for Kubernetes init-containers).
+- Preserves the file permissions of the source template on the rendered output.
+- Prints rendered output to stdout when no `--output` is given.
 
 ## Installation
 
-Clone this repository and install the requirements:
+```bash
+pip install jnjrender
+```
+
+Or from source:
 
 ```bash
-git clone https://github.com/yourusername/jnjrender.git
+git clone https://github.com/infn-epics/jnjrender.git
 cd jnjrender
-pip install -r requirements.txt
+pip install .
 ```
 
 ## Usage
 
-### Render a Jinja2 Template File
-To render a specific Jinja2 template file with variables from a YAML file:
-
-```bash
-python jnjrender.py template.j2 variables.yaml --output output.yaml
+```
+jnjrender <template> <variables.yaml> [--output <output>] [--auto] [--template NAME] [--version]
 ```
 
-If no output file is specified, the rendered content will be printed to the console:
+| Argument | Description |
+|---|---|
+| `template` | Path to a `.j2` file **or** a directory containing `.j2` files |
+| `variables.yaml` | YAML file supplying the template variables |
+| `--output`, `-o` | Output file or directory. Prints to stdout if omitted |
+| `--auto` | Select the template whose name matches the `template` key in the YAML file |
+| `--template NAME` | Explicitly select template `NAME.yaml.j2` from the input directory |
+| `--version` | Print the version and exit |
+
+### Render a single file
 
 ```bash
-python jnjrender.py template.j2 variables.yaml
+jnjrender device.yaml.j2 config.yaml --output device.yaml
+# or print to stdout
+jnjrender device.yaml.j2 config.yaml
 ```
 
-### Render a Template from a Directory
-If the Jinja2 template is located in a directory, and the YAML file contains a `template` key, `jnjrender` will automatically locate the correct template file:
+### Auto-select template from a library directory
 
-- YAML file (`variables.yaml`):
-  ```yaml
-  template: example
-  ```
+Given `config.yaml` containing `template: pfeiffer-tpg`, only `pfeiffer-tpg.yaml.j2` is rendered — other `.j2` files in the same directory are ignored.
 
-- Command:
-  ```bash
-  python jnjrender.py templates/ variables.yaml --output output.yaml
-  ```
-
-In this case, `jnjrender` will look for `templates/example.yaml.j2` and render it using the variables from `variables.yaml`.
-
-### Preserve File Permissions
-When saving the rendered output to a file, `jnjrender` will apply the same file permissions as the original Jinja2 template.
-
-## Examples
-
-#### Render a Specific Template
 ```bash
-python jnjrender.py template.j2 variables.yaml --output output.yaml
+jnjrender /epics/support/templates/ config.yaml --auto --output /epics/ioc/config/
 ```
 
-#### Render a Template from a Directory
+### Explicitly name the template
+
 ```bash
-python jnjrender.py templates/ variables.yaml --output output.yaml
+jnjrender /epics/support/templates/ config.yaml --template pfeiffer-tpg --output /epics/ioc/config/
 ```
 
-#### Print Rendered Content to Console
+### Render `.j2` files already present in the output directory
+
 ```bash
-python jnjrender.py template.j2 variables.yaml
+find /epics/ioc/config -name "*.j2" -exec sh -c \
+  'jnjrender "$1" config.yaml --output "${1%.j2}"' _ {} \;
 ```
+
+## How `--auto` / `--template` work with directories
+
+When both the input and output are directories and a template name is known:
+
+1. `jnjrender` walks the input directory tree to find a **subdirectory** named `<template>` or a file named `<template>.yaml.j2`.
+2. Only that matching `.j2` file (and any non-`.j2` companion files) are copied to the output directory.
+3. The selected `.j2` file is rendered and saved alongside the non-template files.
+
+This prevents sibling templates (e.g. `pfeiffer-hiscroll6.yaml.j2` next to `pfeiffer-tpg.yaml.j2`) from being rendered unintentionally.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 2 | Template file not found in directory |
+| 3 | `template` key missing and no template name provided |
+| 4 | Jinja2 file not found |
+| 5 | Template rendering failed |
+| 6 | Failed to write output file |
+| 7 | Template directory not found under input path |
 
 ## License
 
